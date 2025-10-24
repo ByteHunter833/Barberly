@@ -1,6 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:gobar/api/api_service.dart';
 import 'package:gobar/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
@@ -19,7 +18,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
   final _phoneController = PhoneController(
-    const PhoneNumber(isoCode: IsoCode.UZ, nsn: '948098084'),
+    const PhoneNumber(isoCode: IsoCode.UZ, nsn: ''),
   );
   final _confirmController = TextEditingController();
 
@@ -44,20 +43,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
-  Future<void> register(String name, String phone, String password) async {
-    try {
-      final resp = await ApiService.postData('register', {
-        'name': name,
-        'phone': phone,
-        'password': password,
-      });
-      if (resp != null) {
-        Navigator.pushReplacementNamed(context, '/otp');
-      }
-      debugPrint(resp.toString());
-    } catch (e) {
-      debugPrint(e.toString());
-    }
+  // Future<void> register(String name, String phone, String password) async {
+  //   try {
+  //     final resp = await ApiService.postData('register', {
+  //       'name': name,
+  //       'phone': phone,
+  //       'password': password,
+  //     });
+  //     if (resp != null) {
+  //       Navigator.pushReplacementNamed(context, '/otp');
+  //     }
+  //     debugPrint(resp.toString());
+  //   } catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
+  void register(String name, String phone, String password) {
+    Navigator.pushReplacementNamed(context, '/otp');
   }
 
   @override

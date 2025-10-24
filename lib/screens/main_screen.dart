@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gobar/screens/chat/chat_screen.dart';
 import 'package:gobar/screens/home_page.dart';
+import 'package:gobar/screens/profile/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -13,8 +15,8 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = [
     const HomePage(),
     const Center(child: Text('Booking', style: TextStyle(fontSize: 18))),
-    const Center(child: Text('Chat', style: TextStyle(fontSize: 18))),
-    const Center(child: Text('Profile', style: TextStyle(fontSize: 18))),
+    const ChatScreen(),
+    const ProfileScreen(),
   ];
 
   int _selectedIndex = 0;

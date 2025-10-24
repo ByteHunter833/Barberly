@@ -39,7 +39,6 @@ class _SplashScreenState extends State<SplashScreen>
           transitionDuration: const Duration(milliseconds: 800),
           pageBuilder: (_, __, ___) => const OnboardingScreen(),
           transitionsBuilder: (_, animation, __, child) {
-            // Плавное исчезновение сплэша и появление Onboarding
             return FadeTransition(opacity: animation, child: child);
           },
         ),
