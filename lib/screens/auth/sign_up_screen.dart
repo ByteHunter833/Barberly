@@ -1,26 +1,38 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gobar/provider/api_service_provider.dart';
 import 'package:gobar/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
-class SignUpScreen extends StatefulWidget {
+class SignUpScreen extends ConsumerStatefulWidget {
   final void Function()? onTap;
   const SignUpScreen({super.key, this.onTap});
 
   @override
-  State<SignUpScreen> createState() => _SignUpScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _SignUpScreenState extends State<SignUpScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool isObsCured = true;
   final _formKey = GlobalKey<FormState>();
-  // 🎯 Контроллеры
+
   final _nameController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmController = TextEditingController();
+
   final _phoneController = PhoneController(
     const PhoneNumber(isoCode: IsoCode.UZ, nsn: ''),
   );
-  final _confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   String? _validateName(String? value) {
     final name = value?.trim() ?? '';
@@ -43,36 +55,45 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return null;
   }
 
-  // Future<void> register(String name, String phone, String password) async {
-  //   try {
-  //     final resp = await ApiService.postData('register', {
-  //       'name': name,
-  //       'phone': phone,
-  //       'password': password,
-  //     });
-  //     if (resp != null) {
-  //       Navigator.pushReplacementNamed(context, '/otp');
-  //     }
-  //     debugPrint(resp.toString());
-  //   } catch (e) {
-  //     debugPrint(e.toString());
-  //   }
-  // }
-  void register(String name, String phone, String password) {
-    Navigator.pushReplacementNamed(context, '/otp');
-  }
+  Future<void> register() async {
+    if (_formKey.currentState!.validate()) {
+      final rawPhone = _phoneController.value!.international;
+      final phone = rawPhone.replaceAll(RegExp(r'\s+'), '');
+      debugPrint(rawPhone);
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
-    _phoneController.dispose();
-    super.dispose();
+      ref
+          .read(authControllerProvider.notifier)
+          .register(
+            _nameController.text.trim(),
+            phone,
+            _passwordController.text.trim(),
+          );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (previous, next) {
+      next.status.whenOrNull(
+        data: (data) {
+          final otp = data;
+          Navigator.pushNamed(
+            context,
+            '/otp',
+            arguments: {'otp': otp},
+          ); // ✅ успешная регистрация
+        },
+        error: (error, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          debugPrint(error.toString());
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
@@ -101,8 +122,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 MyTextfield(
                   hintText: 'Joe Samanta',
                   labelText: 'Name',
-                  validator: (value) => _validateName(value),
-                  // errorText: _nameError,
+                  validator: _validateName,
                   controller: _nameController,
                 ),
                 const SizedBox(height: 10),
@@ -128,16 +148,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                     errorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xffE53935), // насыщенный красный
-                      ),
+                      borderSide: const BorderSide(color: Colors.red),
                     ),
                     focusedErrorBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xffD32F2F), // чуть темнее при фокусе
-                        width: 1,
-                      ),
+                      borderSide: const BorderSide(color: Colors.red),
                     ),
                   ),
                   validator: PhoneValidator.validMobile(),
@@ -149,19 +164,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: isObsCured,
                   hintText: '*****',
                   labelText: 'Create password',
-                  validator: (value) => _validatePassword(value),
-                  // errorText: _passwordError,
                   controller: _passwordController,
+                  validator: _validatePassword,
                   prefixIcon: const Icon(Icons.key),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(() {
-                        isObsCured = !isObsCured;
-                      });
+                      setState(() => isObsCured = !isObsCured);
                     },
-                    icon: isObsCured
-                        ? const Icon(Icons.visibility_off_outlined)
-                        : const Icon(Icons.visibility_outlined),
+                    icon: Icon(
+                      isObsCured
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
                   ),
                 ),
 
@@ -170,23 +184,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   obscureText: isObsCured,
                   hintText: '*****',
                   labelText: 'Confirm password',
-                  validator: (value) => _validateConfirm(value),
-
                   controller: _confirmController,
+                  validator: _validateConfirm,
                   prefixIcon: const Icon(Icons.key),
                   suffixIcon: IconButton(
                     onPressed: () {
-                      setState(() {
-                        isObsCured = !isObsCured;
-                      });
+                      setState(() => isObsCured = !isObsCured);
                     },
-                    icon: isObsCured
-                        ? const Icon(Icons.visibility_off_outlined)
-                        : const Icon(Icons.visibility_outlined),
+                    icon: Icon(
+                      isObsCured
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                    ),
                   ),
                 ),
 
                 const SizedBox(height: 18),
+
                 SizedBox(
                   width: double.infinity,
                   height: 53,
@@ -198,19 +212,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        register(
-                          _nameController.text.trim(),
-                          _phoneController.value!.nsn,
-                          _passwordController.text.trim(),
-                        );
-                      }
-                    },
-                    child: const Text(
-                      'Register',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    onPressed: authState.status.isLoading ? null : register,
+
+                    child: authState.status.isLoading
+                        ? const CircularProgressIndicator()
+                        : const Text(
+                            'Register',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
 

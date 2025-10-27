@@ -1,19 +1,27 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gobar/provider/api_service_provider.dart';
+import 'package:gobar/service/localstorage_service.dart';
 import 'package:gobar/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
-class LoginScreen extends StatefulWidget {
+class LoginScreen extends ConsumerStatefulWidget {
   final void Function()? onTap;
   const LoginScreen({super.key, this.onTap});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends ConsumerState<LoginScreen> {
   bool isObscured = true;
   final _passwordController = TextEditingController();
+  final _phoneController = PhoneController(
+    const PhoneNumber(isoCode: IsoCode.UZ, nsn: ''),
+  );
 
   @override
   void dispose() {
@@ -21,8 +29,35 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> login(String phone, String password) async {
+    try {
+      await ref.read(authControllerProvider.notifier).login(phone, password);
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (prev, next) {
+      next.status.whenOrNull(
+        data: (data) async {
+          final user = data['user']['name'];
+
+          await LocalStorage.saveToken(data['token']);
+          await LocalStorage.saveUsername(user);
+          Navigator.pushReplacementNamed(context, '/main');
+        },
+        error: (err, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(err.toString())));
+        },
+      );
+    });
+
     return Scaffold(
       body: Stack(
         children: [
@@ -46,7 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   topRight: Radius.circular(20),
                 ),
               ),
-
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +99,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-
                   PhoneInput(
                     countrySelectorNavigator:
                         const CountrySelectorNavigator.modalBottomSheet(),
@@ -79,20 +112,23 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Color(0xff000000)),
                       ),
-
                       errorBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.red),
+                      ),
+                      focusedErrorBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: const BorderSide(color: Colors.red),
                       ),
                     ),
                     validator: PhoneValidator.validMobile(),
+                    controller: _phoneController,
                   ),
                   const SizedBox(height: 10),
                   MyTextfield(
                     obscureText: isObscured,
                     hintText: '*****',
-                    labelText: 'Create password',
-
+                    labelText: 'Password',
                     controller: _passwordController,
                     prefixIcon: const Icon(Icons.key),
                     suffixIcon: IconButton(
@@ -129,11 +165,21 @@ class _LoginScreenState extends State<LoginScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      onPressed: () {},
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      onPressed: authState.status.isLoading
+                          ? null
+                          : () async {
+                              final phone =
+                                  _phoneController.value?.international ?? '';
+                              final password = _passwordController.text.trim();
+
+                              await login(phone, password);
+                            },
+                      child: authState.status.isLoading
+                          ? const CircularProgressIndicator()
+                          : const Text(
+                              'Login',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 18),

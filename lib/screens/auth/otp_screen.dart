@@ -1,11 +1,38 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gobar/provider/api_service_provider.dart';
+import 'package:gobar/service/localstorage_service.dart';
 
-class OtpScreen extends StatelessWidget {
+class OtpScreen extends ConsumerWidget {
   const OtpScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final args = ModalRoute.of(context)!.settings.arguments as Map?;
+    final phone = args?['otp']['phone'] ?? '';
+    final code = args?['otp']['code'] ?? '';
+
+    final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (previous, next) {
+      next.status.whenOrNull(
+        data: (data) async {
+          final user = data['user']['name'];
+          await LocalStorage.saveToken(data['token']);
+          await LocalStorage.saveUsername(user);
+          Navigator.pushReplacementNamed(context, '/main');
+        },
+        error: (error, _) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(error.toString())));
+        },
+      );
+    });
+
     return Scaffold(
       backgroundColor: const Color(0xffF9F9FB),
       body: SafeArea(
@@ -25,26 +52,22 @@ class OtpScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 10),
-                const Text(
-                  'We’ve sent a 4-digit code to your phone\nThis code will expire in 00:30',
-                  style: TextStyle(
+                Text(
+                  'We sent a code to $phone, code $code',
+                  style: const TextStyle(
                     color: Color(0xFF757575),
                     fontSize: 15,
                     height: 1.5,
                   ),
                 ),
                 const SizedBox(height: 40),
-                const OtpForm(),
-                const SizedBox(height: 20),
-                Center(
-                  child: TextButton(
-                    onPressed: () {},
-                    style: TextButton.styleFrom(
-                      foregroundColor: const Color(0xff363062),
-                      textStyle: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    child: const Text('Resend OTP Code'),
-                  ),
+                OtpForm(
+                  onVerify: (code) {
+                    ref
+                        .read(authControllerProvider.notifier)
+                        .verifyOtp(phone, code);
+                  },
+                  loading: authState.status.isLoading,
                 ),
               ],
             ),
@@ -55,13 +78,12 @@ class OtpScreen extends StatelessWidget {
   }
 }
 
-final authOutlineInputBorder = OutlineInputBorder(
-  borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-  borderRadius: BorderRadius.circular(14),
-);
-
+//message, token, user
 class OtpForm extends StatefulWidget {
-  const OtpForm({super.key});
+  final void Function(String code) onVerify;
+  final bool loading;
+
+  const OtpForm({super.key, required this.onVerify, required this.loading});
 
   @override
   State<OtpForm> createState() => _OtpFormState();
@@ -77,10 +99,10 @@ class _OtpFormState extends State<OtpForm> {
 
   @override
   void dispose() {
-    for (final c in _controllers) {
+    for (var c in _controllers) {
       c.dispose();
     }
-    for (final f in _focusNodes) {
+    for (var f in _focusNodes) {
       f.dispose();
     }
     super.dispose();
@@ -88,53 +110,27 @@ class _OtpFormState extends State<OtpForm> {
 
   void _onChanged(String value, int index) {
     if (value.isNotEmpty && index < 3) {
-      FocusScope.of(context).requestFocus(_focusNodes[index + 1]);
+      _focusNodes[index + 1].requestFocus();
     }
-
     if (value.isEmpty && index > 0) {
-      FocusScope.of(context).requestFocus(_focusNodes[index - 1]);
+      _focusNodes[index - 1].requestFocus();
     }
   }
 
   void _validateCode() {
     final code = _controllers.map((c) => c.text).join();
+
     if (code.length < 4) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter the full 4-digit code.'),
+          content: Text('Enter 4 digits'),
           backgroundColor: Colors.redAccent,
         ),
       );
       return;
     }
 
-    // 🔹 Здесь можно добавить твою валидацию (с API или с локальной логикой)
-    final isValid = code == '1234'; // пример
-
-    if (!isValid) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Incorrect code. Try again.'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-
-      // ❌ Очищаем все поля, если код неверный
-      for (final c in _controllers) {
-        c.clear();
-      }
-
-      // Возвращаем фокус к первому полю
-      FocusScope.of(context).requestFocus(_focusNodes.first);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Code verified successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pushReplacementNamed(context, '/main');
-    }
+    widget.onVerify(code);
   }
 
   @override
@@ -145,14 +141,14 @@ class _OtpFormState extends State<OtpForm> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: List.generate(4, (index) {
+            children: List.generate(4, (i) {
               return SizedBox(
                 height: 64,
                 width: 64,
                 child: TextFormField(
-                  controller: _controllers[index],
-                  focusNode: _focusNodes[index],
-                  onChanged: (value) => _onChanged(value, index),
+                  controller: _controllers[i],
+                  focusNode: _focusNodes[i],
+                  onChanged: (v) => _onChanged(v, i),
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                     fontSize: 24,
@@ -166,25 +162,14 @@ class _OtpFormState extends State<OtpForm> {
                   ],
                   decoration: InputDecoration(
                     hintText: '•',
+                    filled: true,
+                    fillColor: Colors.white,
                     hintStyle: const TextStyle(
                       color: Color(0xFFC5C5C5),
                       fontSize: 22,
                     ),
-                    filled: true,
-                    fillColor: Colors.white,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: Color(0xFFE0E0E0),
-                        width: 1,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(
-                        color: Colors.blueAccent,
-                        width: 2,
-                      ),
                     ),
                   ),
                 ),
@@ -193,9 +178,8 @@ class _OtpFormState extends State<OtpForm> {
           ),
           const SizedBox(height: 36),
           ElevatedButton(
-            onPressed: _validateCode,
+            onPressed: widget.loading ? null : _validateCode,
             style: ElevatedButton.styleFrom(
-              elevation: 0,
               backgroundColor: const Color(0xff363062),
               foregroundColor: Colors.white,
               minimumSize: const Size(double.infinity, 54),
@@ -203,14 +187,12 @@ class _OtpFormState extends State<OtpForm> {
                 borderRadius: BorderRadius.circular(16),
               ),
             ),
-            child: const Text(
-              'Verify Code',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 17,
-                letterSpacing: 0.5,
-              ),
-            ),
+            child: widget.loading
+                ? const CircularProgressIndicator()
+                : const Text(
+                    'Verify Code',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                  ),
           ),
         ],
       ),

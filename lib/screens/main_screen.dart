@@ -1,25 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gobar/screens/chat/chat_screen.dart';
 import 'package:gobar/screens/home_page.dart';
 import 'package:gobar/screens/profile/profile_screen.dart';
+import 'package:gobar/service/localstorage_service.dart';
 
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
-  final List<Widget> _screens = [
-    const HomePage(),
-    const Center(child: Text('Booking', style: TextStyle(fontSize: 18))),
-    const ChatScreen(),
-    const ProfileScreen(),
-  ];
-
+class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
+  String? _username;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUsername();
+  }
+
+  Future<void> _loadUsername() async {
+    final user = await LocalStorage.getUserName();
+    setState(() {
+      _username = user;
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() => _selectedIndex = index);
@@ -36,14 +45,16 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screens = [
+      HomePage(user: _username ?? ''), // передаем уже готовую строку
+      const Center(child: Text('Booking', style: TextStyle(fontSize: 18))),
+      const ChatScreen(),
+      const ProfileScreen(),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.white,
-      body: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        transitionBuilder: (child, animation) =>
-            FadeTransition(opacity: animation, child: child),
-        child: _screens[_selectedIndex],
-      ),
+      body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
@@ -52,19 +63,16 @@ class _MainScreenState extends State<MainScreen> {
         selectedItemColor: Colors.blueAccent,
         unselectedItemColor: Colors.grey,
         showUnselectedLabels: true,
-        selectedFontSize: 13,
-        unselectedFontSize: 12,
         items: List.generate(_icons.length, (index) {
-          final isSelected = _selectedIndex == index;
           return BottomNavigationBarItem(
             icon: SvgPicture.asset(
               _icons[index],
-              colorFilter: ColorFilter.mode(
-                isSelected ? Colors.blueAccent : Colors.grey,
-                BlendMode.srcIn,
-              ),
               height: 24,
               width: 24,
+              colorFilter: ColorFilter.mode(
+                _selectedIndex == index ? Colors.blueAccent : Colors.grey,
+                BlendMode.srcIn,
+              ),
             ),
             label: _labels[index],
           );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gobar/service/localstorage_service.dart';
 
 class BannerHome extends StatelessWidget {
   const BannerHome({super.key});
@@ -31,7 +32,10 @@ class BannerHome extends StatelessWidget {
             bottom: 12,
             left: 12,
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () async {
+                final user = await LocalStorage.getUserName();
+                print(user);
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xff363062),
                 foregroundColor: Colors.white,

@@ -5,7 +5,8 @@ import 'package:gobar/widgets/filter_bottom_sheet.dart';
 import 'package:lucide_icons/lucide_icons.dart'; // ⚡️ Удобная иконка для локации
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  final String user;
+  const HomePage({super.key, required this.user});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -22,14 +23,14 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   // Левая часть — имя и город
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Row(
+                      const Row(
                         children: [
                           Icon(
                             LucideIcons.mapPin,
@@ -46,10 +47,10 @@ class _HomePageState extends State<HomePage> {
                           ),
                         ],
                       ),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(
-                        'Joe Samanta',
-                        style: TextStyle(
+                        widget.user,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
                           color: Color(0xff1C1C1C),
@@ -59,8 +60,10 @@ class _HomePageState extends State<HomePage> {
                   ),
                   CircleAvatar(
                     radius: 24,
-                    backgroundImage: NetworkImage(
-                      'https://i.pravatar.cc/150?img=12', // пример
+                    backgroundColor: Colors.grey,
+                    child: Text(
+                      widget.user.isNotEmpty ? widget.user.substring(0, 1) : '',
+                      style: const TextStyle(color: Colors.white),
                     ),
                   ),
                 ],

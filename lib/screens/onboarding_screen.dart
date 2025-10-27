@@ -1,5 +1,8 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:flutter/material.dart';
 import 'package:gobar/screens/auth/auth_screen.dart';
+import 'package:gobar/service/localstorage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -33,14 +36,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     },
   ];
 
-  void _nextPage() {
+  void _nextPage() async {
     if (_currentIndex < _pages.length - 1) {
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
+      final user = await LocalStorage.getUserName();
+      final token = await LocalStorage.getToken();
+      final shown = await LocalStorage.isOnboardingShown();
+      debugPrint(user);
+      debugPrint(token);
+      debugPrint('$shown');
     } else {
-      // 🔹 Плавный переход на AuthScreen
+      await LocalStorage.setOnboardingShown();
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
