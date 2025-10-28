@@ -26,7 +26,6 @@ class _HomePageState extends State<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Левая часть — имя и город
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

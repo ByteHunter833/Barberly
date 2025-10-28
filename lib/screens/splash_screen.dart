@@ -1,11 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:gobar/screens/auth/auth_screen.dart';
 import 'package:gobar/screens/main_screen.dart';
 import 'package:gobar/screens/onboarding_screen.dart';
 import 'package:gobar/service/localstorage_service.dart';
-import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -82,10 +82,11 @@ class _SplashScreenState extends State<SplashScreen>
           child: SizedBox(
             height: 220,
             width: 220,
-            child: Lottie.asset(
-              'assets/images/logo_animation.json',
-              fit: BoxFit.contain,
-              repeat: false,
+            child: Column(
+              children: [
+                SvgPicture.asset('assets/icons/logo.svg'),
+                const Text('Barberly', style: TextStyle(color: Colors.white)),
+              ],
             ),
           ),
         ),

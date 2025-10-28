@@ -105,22 +105,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.15.0"
-  cross_cache:
-    dependency: transitive
-    description:
-      name: cross_cache
-      sha256: ddf99059e2174d141efa03bea6d51eb7c8983f4a4af43ddee7556bbc43399522
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.0.5"
-  cross_file:
-    dependency: transitive
-    description:
-      name: cross_file
-      sha256: "7caf6a750a0c04effbb52a676dce9a4a592e10ad35c34d6d2d0e4811160d5670"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.3.4+2"
   crypto:
     dependency: transitive
     description:
@@ -145,38 +129,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.1.6"
-  diffutil_dart:
-    dependency: transitive
-    description:
-      name: diffutil_dart
-      sha256: "5e74883aedf87f3b703cb85e815bdc1ed9208b33501556e4a8a5572af9845c81"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.0.1"
-  dio:
-    dependency: transitive
-    description:
-      name: dio
-      sha256: d90ee57923d1828ac14e492ca49440f65477f4bb1263575900be731a3dac66a9
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.9.0"
-  dio_web_adapter:
-    dependency: transitive
-    description:
-      name: dio_web_adapter
-      sha256: "7586e476d70caecaf1686d21eee7247ea43ef5c345eab9e0cc3583ff13378d78"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.1.1"
-  equatable:
-    dependency: transitive
-    description:
-      name: equatable
-      sha256: "567c64b3cb4cf82397aac55f4f0cbd3ca20d77c6c03bedbc4ceaddc08904aef7"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.7"
   fake_async:
     dependency: transitive
     description:
@@ -230,30 +182,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  flutter_chat_core:
-    dependency: transitive
-    description:
-      name: flutter_chat_core
-      sha256: "113f9b0c2c9f8fb77a40d298084d99b28ff4876f99598ad01bea8b731f1acc20"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.8.0"
-  flutter_chat_types:
-    dependency: "direct main"
-    description:
-      name: flutter_chat_types
-      sha256: e285b588f6d19d907feb1f6d912deaf22e223656769c34093b64e1c59b094fb9
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.6.2"
-  flutter_chat_ui:
-    dependency: "direct main"
-    description:
-      name: flutter_chat_ui
-      sha256: "08a13577ea943d7965e3b1766d3a2119b07b56aced5336900ab7fb4c377d4ca0"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.9.1"
   flutter_lints:
     dependency: "direct dev"
     description:
@@ -309,14 +237,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
-  freezed_annotation:
-    dependency: transitive
-    description:
-      name: freezed_annotation
-      sha256: "7294967ff0a6d98638e7acb774aac3af2550777accd8149c90af5b014e6d44d8"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.1.0"
   frontend_server_client:
     dependency: transitive
     description:
@@ -365,14 +285,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "4.1.2"
-  idb_shim:
-    dependency: transitive
-    description:
-      name: idb_shim
-      sha256: ee391deb010143823d25db15f8b002945e19dcb5f2dd5b696a98cb6db7644012
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.6.7"
   intl:
     dependency: transitive
     description:
@@ -397,14 +309,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.2"
-  json_annotation:
-    dependency: transitive
-    description:
-      name: json_annotation
-      sha256: "1ce844379ca14835a50d2f019a3099f419082cfdd231cd86a142af94dd5c6bb1"
-      url: "https://pub.dev"
-    source: hosted
-    version: "4.9.0"
   leak_tracker:
     dependency: transitive
     description:
@@ -597,14 +501,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  phone_text_field:
-    dependency: "direct main"
-    description:
-      name: phone_text_field
-      sha256: "95d3e326dc75c0609b982d264f3d6f9fd72ef81488023748b6ce63ad99492a3a"
-      url: "https://pub.dev"
-    source: hosted
-    version: "2.0.0"
   platform:
     dependency: transitive
     description:
@@ -661,22 +557,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
-  scrollview_observer:
-    dependency: transitive
-    description:
-      name: scrollview_observer
-      sha256: c2f713509f18f88f637b2084b47a90c91fb1ef066d5d82d2cf3194d8509dc6ab
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.26.2"
-  sembast:
-    dependency: transitive
-    description:
-      name: sembast
-      sha256: "7119cf6f79bd1d48c8ec7943f4facd96c15ab26823021ed0792a487c7cd34441"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.8.5+1"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -826,14 +706,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.4.1"
-  synchronized:
-    dependency: transitive
-    description:
-      name: synchronized
-      sha256: c254ade258ec8282947a0acbbc90b9575b4f19673533ee46f2f6e9b3aeefd7c0
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.4.0"
   term_glyph:
     dependency: transitive
     description:

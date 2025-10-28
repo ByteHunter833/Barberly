@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gobar/service/localstorage_service.dart';
+import 'package:gobar/screens/explore_barbers.dart';
 
 class BannerHome extends StatelessWidget {
   const BannerHome({super.key});
@@ -32,9 +32,25 @@ class BannerHome extends StatelessWidget {
             bottom: 12,
             left: 12,
             child: ElevatedButton(
-              onPressed: () async {
-                final user = await LocalStorage.getUserName();
-                print(user);
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (context, animation, secondaryAnimation) =>
+                        const ExploreBarbers(),
+                    transitionsBuilder:
+                        (context, animation, secondaryAnimation, child) {
+                          final begin = const Offset(1.0, 0.0);
+                          final end = Offset.zero;
+                          final tween = Tween(begin: begin, end: end);
+                          final tweenAnimation = animation.drive(tween);
+                          return SlideTransition(
+                            position: tweenAnimation,
+                            child: child,
+                          );
+                        },
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xff363062),

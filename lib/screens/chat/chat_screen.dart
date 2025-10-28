@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gobar/screens/chat/chat.dart';
+import 'package:gobar/screens/chat/message_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -51,7 +51,6 @@ class _ChatScreenState extends State<ChatScreen>
       'avatar': 'https://i.pravatar.cc/150?img=3',
       'online': false,
     },
-    // Добавь ещё сообщений по аналогии
   ];
 
   @override
@@ -159,7 +158,7 @@ Widget _chatList(TabController tabController, List tabs, List messages) {
                         PageRouteBuilder(
                           pageBuilder:
                               (context, animation, secondaryAnimation) =>
-                                  const Chat(),
+                                  const MessagesScreen(),
                           transitionsBuilder:
                               (context, animation, secondaryAnimation, child) {
                                 final begin = const Offset(1.0, 0.0);
