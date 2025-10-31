@@ -13,14 +13,16 @@ workflows:
       - name: Установить зависимости Flutter
         script: flutter pub get
 
-      - name: Собрать для симулятора (без подписи)
+      - name: Установить Pods (если нужно)
         script: |
-          flutter build ios \
-            --debug \  # Или --profile, или ничего (default debug)
-            --no-codesign \
-            --simulator
+          if [ -f ios/Podfile ]; then
+            cd ios && pod install
+            cd ..
+          fi
 
-      # Опционально: Запаковать .app в ZIP
+      - name: Собрать для симулятора (без подписи)
+        script: flutter build ios --debug --no-codesign --simulator
+
       - name: Запаковать артефакт
         script: |
           APP_DIR="build/ios/iphonesimulator/Runner.app"
