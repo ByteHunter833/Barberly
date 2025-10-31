@@ -1,39 +1,21 @@
 workflows:
-  flutter-ios-simulator:
-    name: Flutter iOS Simulator Build
-    max_build_duration: 120 # В минутах
-    instance_type: mac_mini_m2 # Или mac_mini_m1 для экономии
-
+  ios-simulator-build:
+    name: iOS Simulator Build
     environment:
-      flutter: stable # Версия Flutter (stable, beta или dev)
-      xcode: latest # Последняя версия Xcode
-      cocoapods: default # Автоматически запустит pod install, если нужно
-
+      flutter: stable # Or the specific Flutter version you need
+      xcode: latest # Or the specific Xcode version you need
     scripts:
-      - name: Установить зависимости Flutter
-        script: flutter pub get
-
-      - name: Установить Pods (если нужно)
+      - name: Build for iOS Simulator
         script: |
-          if [ -f ios/Podfile ]; then
-            cd ios && pod install
-            cd ..
-          fi
-
-      - name: Собрать для симулятора (без подписи)
-        script: flutter build ios --debug --no-codesign --simulator
-
-      - name: Запаковать артефакт
-        script: |
-          APP_DIR="build/ios/iphonesimulator/Runner.app"
-          ZIP_FILE="Runner-simulator.zip"
-          if [ -d "$APP_DIR" ]; then
-            zip -r "$ZIP_FILE" "$APP_DIR"
-          else
-            echo "App directory not found!"
-            exit 1
-          fi
-
+          xcodebuild build \
+            -workspace "$XCODE_WORKSPACE" \
+            -scheme "$XCODE_SCHEME" \
+            -sdk iphonesimulator \
+            -destination 'platform=iOS Simulator,name=iPhone 14 Pro,OS=16.2' \ # Adjust simulator name and OS version as needed
+            -configuration Debug \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
     artifacts:
-      - build/ios/iphonesimulator/**/*.app # Точный путь для симулятора
-      - Runner-simulator.zip # ZIP, если скрипт сработал
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.app
+      - $HOME/Library/Developer/Xcode/DerivedData/**/Build/**/*.dSYM
