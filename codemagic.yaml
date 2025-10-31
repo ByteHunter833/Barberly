@@ -10,27 +10,27 @@ workflows:
       cocoapods: default # Автоматически запустит pod install, если нужно
 
     scripts:
-  - name: Установить зависимости Flutter
-    script: flutter pub get
+      - name: Установить зависимости Flutter
+        script: flutter pub get
 
-  - name: Собрать для симулятора (без подписи)
-    script: |
-      flutter build ios --release \
-        --no-codesign \
-        --simulator
+      - name: Собрать для симулятора (без подписи)
+        script: |
+          flutter build ios --release \
+            --no-codesign \
+            --simulator
 
-  # Опционально: Запаковать .app в ZIP
-  - name: Запаковать артефакт
-    script: |
-      APP_DIR="build/ios/iphonesimulator/Runner.app"
-      ZIP_FILE="Runner-simulator.zip"
-      if [ -d "$APP_DIR" ]; then
-        zip -r "$ZIP_FILE" "$APP_DIR"
-      else
-        echo "App directory not found!"
-        exit 1
-      fi
+      # Опционально: Запаковать .app в ZIP
+      - name: Запаковать артефакт
+        script: |
+          APP_DIR="build/ios/iphonesimulator/Runner.app"
+          ZIP_FILE="Runner-simulator.zip"
+          if [ -d "$APP_DIR" ]; then
+            zip -r "$ZIP_FILE" "$APP_DIR"
+          else
+            echo "App directory not found!"
+            exit 1
+          fi
 
-artifacts:
-  - build/ios/iphonesimulator/**/*.app  # Точный путь для симулятора
-  - Runner-simulator.zip  # ZIP, если скрипт сработал
+    artifacts:
+      - build/ios/iphonesimulator/**/*.app # Точный путь для симулятора
+      - Runner-simulator.zip # ZIP, если скрипт сработал
