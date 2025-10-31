@@ -6,6 +6,7 @@ import 'package:gobar/screens/profile/about.dart';
 import 'package:gobar/screens/profile/account_details.dart';
 import 'package:gobar/screens/profile/help.dart';
 import 'package:gobar/screens/profile/security.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -73,10 +74,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontSize: 24,
                         ),
                       ),
-                      SvgPicture.asset(
-                        'assets/icons/profile_logo.svg',
-                        height: 28,
-                        color: Colors.white,
+                      Row(
+                        children: [
+                          SvgPicture.asset(
+                            'assets/images/logo.svg',
+                            width: 30,
+                            height: 30,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            'Barberly',
+                            style: GoogleFonts.poppins(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),

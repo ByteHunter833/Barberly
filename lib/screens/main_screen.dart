@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:gobar/screens/booking/booking_screen.dart';
 import 'package:gobar/screens/chat/chat_screen.dart';
 import 'package:gobar/screens/home_page.dart';
 import 'package:gobar/screens/profile/profile_screen.dart';
@@ -47,7 +48,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final screens = [
       HomePage(user: _username ?? ''), // передаем уже готовую строку
-      const Center(child: Text('Booking', style: TextStyle(fontSize: 18))),
+      const BookingDetailScreen(),
       const ChatScreen(),
       const ProfileScreen(),
     ];

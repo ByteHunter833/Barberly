@@ -18,7 +18,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   final List<Map<String, String>> _pages = [
     {
       'image': 'assets/images/slider1.png',
-      'title': 'Welcome Gobars',
+      'title': 'Welcome Barberly',
       'desc':
           'Find the best grooming experience in your city with just one tap! Don’t miss out on the haircut or treatment of your dreams. Let’s start now!',
     },

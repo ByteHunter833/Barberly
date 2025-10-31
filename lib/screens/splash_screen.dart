@@ -6,6 +6,7 @@ import 'package:gobar/screens/auth/auth_screen.dart';
 import 'package:gobar/screens/main_screen.dart';
 import 'package:gobar/screens/onboarding_screen.dart';
 import 'package:gobar/service/localstorage_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -46,7 +47,7 @@ class _SplashScreenState extends State<SplashScreen>
 
     Widget nextScreen;
 
-    if (onboardingShown & (token != null)) {
+    if (onboardingShown && (token != null)) {
       nextScreen = const MainScreen();
     } else if (onboardingShown & (token == null)) {
       nextScreen = const AuthScreen();
@@ -84,8 +85,20 @@ class _SplashScreenState extends State<SplashScreen>
             width: 220,
             child: Column(
               children: [
-                SvgPicture.asset('assets/icons/logo.svg'),
-                const Text('Barberly', style: TextStyle(color: Colors.white)),
+                SvgPicture.asset(
+                  'assets/images/logo.svg',
+                  width: 100,
+                  height: 100,
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Barberly',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 32,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:gobar/screens/chat/message_screen.dart';
+import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -66,7 +67,25 @@ class _ChatScreenState extends State<ChatScreen>
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 25),
-            child: SvgPicture.asset('assets/icons/profile_logo.svg'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SvgPicture.asset(
+                  'assets/images/logo.svg',
+                  width: 30,
+                  height: 30,
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Barberly',
+                  style: GoogleFonts.poppins(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
         // bottom:

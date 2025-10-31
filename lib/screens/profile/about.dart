@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class About extends StatelessWidget {
   const About({super.key});
@@ -24,9 +26,32 @@ class About extends StatelessWidget {
           Positioned(
             top: 0,
             child: Image.asset(
-              'assets/images/about.png',
+              'assets/images/about_app.png',
               width: MediaQuery.of(context).size.width,
               fit: BoxFit.cover,
+            ),
+          ),
+          Positioned(
+            top: 120,
+            left: 0,
+            right: 0,
+            child: Column(
+              children: [
+                SvgPicture.asset(
+                  'assets/images/logo.svg',
+                  width: 100,
+                  height: 100,
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  'Barberly',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 32,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ),
 
@@ -50,7 +75,7 @@ class About extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'About Gobar',
+                        'About Barberly',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -60,7 +85,7 @@ class About extends StatelessWidget {
 
                       RichText(
                         text: const TextSpan(
-                          text: 'Gobar: ',
+                          text: 'Barberly: ',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Colors.black,
@@ -71,7 +96,7 @@ class About extends StatelessWidget {
                               text:
                                   'The Best Solution for Online Barber Bookings. '
                                   'Want a more practical and efficient hair shaving experience? '
-                                  'Gobar is the best solution for you! Gobar is an online barber booking '
+                                  'Barberly is the best solution for you! Barberly is an online barber booking '
                                   'application that makes it easy for you to search, select and order '
                                   'haircut services easily and quickly.',
                               style: TextStyle(
