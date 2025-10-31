@@ -1,32 +1,25 @@
-workflows:
-  flutter-ios-simulator:
-    name: Flutter iOS Simulator Build
-    max_build_duration: 120 # В минутах
-    instance_type: mac_mini_m2 # Или mac_mini_m1 для экономии
+scripts:
+  - name: Установить зависимости Flutter
+    script: flutter pub get
 
-    environment:
-      flutter: stable # Версия Flutter (stable, beta или dev)
-      xcode: latest # Последняя версия Xcode
-      cocoapods: default # Автоматически запустит pod install, если нужно
+  - name: Собрать для симулятора (без подписи)
+    script: |
+      flutter build ios --release \
+        --no-codesign \
+        --simulator
 
-    scripts:
-      - name: Установить зависимости Flutter
-        script: flutter pub get
+  # Опционально: Запаковать .app в ZIP
+  - name: Запаковать артефакт
+    script: |
+      APP_DIR="build/ios/iphonesimulator/Runner.app"
+      ZIP_FILE="Runner-simulator.zip"
+      if [ -d "$APP_DIR" ]; then
+        zip -r "$ZIP_FILE" "$APP_DIR"
+      else
+        echo "App directory not found!"
+        exit 1
+      fi
 
-      - name: Собрать для симулятора (без подписи)
-        script: |
-          flutter build ios --release \
-            --no-codesign \
-            --simulator \
-            --target-platform=ios
-
-      # Опционально: Запаковать .app в ZIP для удобства скачивания
-      - name: Запаковать артефакт
-        script: |
-          APP_DIR="build/ios/Release-iphoneos/Runner.app"
-          ZIP_FILE="Runner-simulator.zip"
-          zip -r "$ZIP_FILE" "$APP_DIR"
-
-    artifacts:
-      - build/ios/**/*.app # Основной .app-файл
-      - Runner-simulator.zip # ZIP-архив
+artifacts:
+  - build/ios/iphonesimulator/**/*.app # Точный путь для симулятора
+  - Runner-simulator.zip # ZIP, если скрипт сработал
