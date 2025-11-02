@@ -1,4 +1,4 @@
-name: Build Flutter iOS for Simulator
+name: Build Flutter iOS (Simulator + Release IPA)
 
 on:
   workflow_dispatch:
@@ -13,14 +13,14 @@ concurrency:
 
 jobs:
   build:
-    name: Build Flutter iOS Simulator
+    name: Build Flutter iOS
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java (for Flutter dependencies)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -29,8 +29,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.7'
-          channel: 'stable'
+          channel: 'stable' # Latest stable для Dart 3.9.2+
 
       - name: Show Flutter version
         run: flutter --version
@@ -40,7 +39,7 @@ jobs:
           flutter clean
           flutter pub get
 
-      - name: Create or update iOS platform and Podfile
+      - name: Create iOS platform and Podfile
         run: |
           if [ ! -d "ios" ] || [ ! -f "ios/Podfile" ]; then
             rm -rf ios
@@ -49,8 +48,8 @@ jobs:
           # Ensure Podfile has platform 15.0
           if ! grep -q "platform :ios, '15.0'" ios/Podfile; then
             sed -i '' '/# Uncomment this line/i\\
-            platform :ios, "15.0"\\
-            ' ios/Podfile
+          platform :ios, "15.0"\\
+          ' ios/Podfile
           fi
           # Ensure post_install sets deployment target
           if ! grep -q "config.build_settings\['IPHONEOS_DEPLOYMENT_TARGET'\]" ios/Podfile; then
@@ -70,7 +69,7 @@ jobs:
           cd ios
           pod install --repo-update
 
-      - name: Build for Simulator
+      - name: Build for Simulator (Debug)
         run: flutter build ios --simulator --debug --no-codesign
 
       - name: Upload Simulator App as Artifact
@@ -79,3 +78,71 @@ jobs:
           name: flutter-ios-simulator-app
           path: build/ios/Debug-iphonesimulator/Runner.app
           retention-days: 7
+
+      - name: Build Unsigned Release IPA (no certificate needed)
+        run: |
+          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          if [ -z "$IOS_CERTIFICATE" ]; then
+            echo "No certificate found, building unsigned IPA"
+            flutter build ipa --release --no-codesign --export-options-plist=ios/ExportOptions.plist
+          else
+            echo "Certificate found, skipping unsigned build"
+          fi
+
+      - name: Build Signed Release IPA (with certificate)
+        env:
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          if [ -z "$IOS_CERTIFICATE" ]; then
+            echo "No certificate found, skipping signed build"
+            exit 0
+          fi
+          # Импорт cert и profile
+          echo "$IOS_CERTIFICATE" | base64 --decode > /tmp/cert.p12
+          echo "$IOS_PROVISIONING_PROFILE" | base64 --decode > /tmp/profile.mobileprovision
+
+          # Создай keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$KEYCHAIN_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+
+          # Установи profile
+          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+          cp /tmp/profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
+
+          # Билд IPA
+          flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+
+          # Очисти keychain
+          security delete-keychain build.keychain
+
+      - name: Upload Release IPA as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-release-ipa
+          path: build/ios/ipa/*.ipa
+          retention-days: 7
+
+      # Опционально: Авто-аплоад в TestFlight (с Fastlane, только если signed)
+      - name: Upload to TestFlight (optional)
+        if: ${{ github.ref == 'refs/heads/main' }}
+        env:
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APP_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+        run: |
+          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          if [ -z "$IOS_CERTIFICATE" ]; then
+            echo "No certificate found, skipping TestFlight upload"
+            exit 0
+          fi
+          gem install fastlane
+          cd ios
+          fastlane match appstore  # Требует match setup в репо
+          fastlane deliver
