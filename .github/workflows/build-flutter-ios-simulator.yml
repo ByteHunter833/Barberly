@@ -79,12 +79,12 @@ jobs:
           path: build/ios/Debug-iphonesimulator/Runner.app
           retention-days: 7
 
-      - name: Build Unsigned Release IPA (no certificate needed)
+      - name: Build Unsigned Release Archive (no certificate needed)
         run: |
-          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          # Проверяем наличие cert в shell
           if [ -z "$IOS_CERTIFICATE" ]; then
-            echo "No certificate found, building unsigned IPA"
-            flutter build ipa --release --no-codesign --export-options-plist=ios/ExportOptions.plist
+            echo "No certificate found, building unsigned .xcarchive"
+            flutter build ipa --release --no-codesign  # Создаёт .xcarchive в build/ios/archive/
           else
             echo "Certificate found, skipping unsigned build"
           fi
@@ -95,7 +95,7 @@ jobs:
           IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
           KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
         run: |
-          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          # Проверяем наличие cert в shell
           if [ -z "$IOS_CERTIFICATE" ]; then
             echo "No certificate found, skipping signed build"
             exit 0
@@ -121,12 +121,15 @@ jobs:
           # Очисти keychain
           security delete-keychain build.keychain
 
-      - name: Upload Release IPA as Artifact
+      - name: Upload Release Artifact as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: flutter-ios-release-ipa
-          path: build/ios/ipa/*.ipa
+          name: flutter-ios-release # Общий имя для .ipa или .xcarchive
+          path: |
+            build/ios/ipa/*.ipa
+            build/ios/archive/*.xcarchive  # Добавляем .xcarchive для unsigned
           retention-days: 7
+          if-no-files-found: error # Теперь ошибка, если ничего нет (для дебага)
 
       # Опционально: Авто-аплоад в TestFlight (с Fastlane, только если signed)
       - name: Upload to TestFlight (optional)
@@ -137,7 +140,7 @@ jobs:
           FASTLANE_APPLE_APPLICATION_SPECIFIC_PASSWORD: ${{ secrets.APP_SPECIFIC_PASSWORD }}
           IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
         run: |
-          # Проверяем наличие cert в shell (избегаем линтер-ошибки)
+          # Проверяем наличие cert в shell
           if [ -z "$IOS_CERTIFICATE" ]; then
             echo "No certificate found, skipping TestFlight upload"
             exit 0
