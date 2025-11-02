@@ -64,6 +64,13 @@ jobs:
           end' >> ios/Podfile
           fi
 
+      - name: Update iOS Deployment Target to 15.0
+        run: |
+          # Обновляем IPHONEOS_DEPLOYMENT_TARGET в project.pbxproj (все configs)
+          find ios -name "project.pbxproj" -exec sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' {} \;
+          # Проверяем
+          grep -r "IPHONEOS_DEPLOYMENT_TARGET" ios/Runner.xcodeproj/project.pbxproj
+
       - name: Install CocoaPods
         run: |
           cd ios
@@ -80,17 +87,24 @@ jobs:
           retention-days: 7
 
       - name: Build Unsigned Release Archive (no certificate needed)
+        env:
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
         run: |
           # Проверяем наличие cert в shell
           if [ -z "$IOS_CERTIFICATE" ]; then
             echo "No certificate found, building unsigned .xcarchive"
             flutter build ipa --release --no-codesign  # Создаёт .xcarchive в build/ios/archive/
-            # Debug: Проверим, что создалось
+            # Debug: Полный ls текущей директории
+            pwd
+            ls -la build/
+            ls -la build/ios/
             ls -la build/ios/archive/
-            if [ -f "build/ios/archive/Runner.xcarchive" ]; then
-              echo "Archive created successfully"
+            # Проверяем файл с абсолютным path (от root)
+            ARCHIVE_PATH="$(pwd)/build/ios/archive/Runner.xcarchive"
+            if [ -f "$ARCHIVE_PATH" ]; then
+              echo "Archive created successfully at $ARCHIVE_PATH"
             else
-              echo "Archive not found - check build errors above"
+              echo "Archive not found at $ARCHIVE_PATH - check build errors above"
               exit 1
             fi
           else
@@ -126,6 +140,7 @@ jobs:
           # Билд IPA
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
           # Debug: Проверим IPA
+          pwd
           ls -la build/ios/ipa/
 
           # Очисти keychain
