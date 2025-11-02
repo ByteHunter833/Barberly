@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gobar/screens/barber_detail_screen.dart';
+import 'package:gobar/screens/barbers/barber_detail_screen.dart';
 
 class ExploreBarbers extends StatefulWidget {
   const ExploreBarbers({super.key});

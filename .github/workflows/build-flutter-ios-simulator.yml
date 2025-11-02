@@ -1,11 +1,11 @@
 name: Build Flutter iOS for Simulator
 
 on:
-  workflow_dispatch:  # Ручной запуск
+  workflow_dispatch: # Ручной запуск
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -14,41 +14,47 @@ concurrency:
 jobs:
   build:
     name: Build Flutter iOS Simulator
-    runs-on: macos-latest  # Требуется macOS для iOS
+    runs-on: macos-latest # Требуется macOS для iOS
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Setup Java (for Flutter dependencies)
-      uses: actions/setup-java@v4
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+      - name: Setup Java (for Flutter dependencies)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
-    - name: Setup Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.24.0'  # Укажи актуальную версию (проверь flutter --version локально)
-        channel: 'stable'
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0' # Укажи актуальную версию (проверь flutter --version локально)
+          channel: 'stable'
 
-    - name: Show Flutter version
-      run: flutter --version
+      - name: Show Flutter version
+        run: flutter --version
 
-    - name: Install CocoaPods (for iOS dependencies)
-      run: |
-        cd ios
-        pod install --repo-update
+      - name: Create iOS platform if missing
+        run: |
+          if [ ! -d "ios" ] || [ ! -f "ios/Podfile" ]; then
+            flutter create --platforms=ios .
+          fi
 
-    - name: Build for Simulator
-      run: |
-        flutter clean
-        flutter pub get
-        flutter build ios --simulator --no-codesign  # --debug или --release по вкусу
+      - name: Get dependencies
+        run: flutter pub get
 
-    - name: Upload Simulator App as Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: flutter-ios-simulator-app
-        path: build/ios/iphoneos/Runner.app  # Или Debug-iphonesimulator, если нужно
-        retention-days: 7
+      - name: Install CocoaPods (for iOS dependencies)
+        run: |
+          cd ios
+          pod install --repo-update
+
+      - name: Build for Simulator
+        run: flutter build ios --simulator --debug --no-codesign
+
+      - name: Upload Simulator App as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-simulator-app
+          path: build/ios/Debug-iphonesimulator/Runner.app
+          retention-days: 7

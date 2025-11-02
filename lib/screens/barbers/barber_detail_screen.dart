@@ -3,22 +3,6 @@
 import 'package:flutter/material.dart';
 import 'package:gobar/screens/booking/booking_appointment.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: BarberDetailScreen(),
-    );
-  }
-}
-
 class BarberDetailScreen extends StatefulWidget {
   const BarberDetailScreen({super.key});
 

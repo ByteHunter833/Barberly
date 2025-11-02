@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:gobar/screens/auth/auth_screen.dart';
-import 'package:gobar/service/localstorage_service.dart';
+import 'package:gobar/services/localstorage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

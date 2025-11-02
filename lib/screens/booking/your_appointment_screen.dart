@@ -205,6 +205,7 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
                             controller: _couponController,
                             decoration: InputDecoration(
                               hintText: 'DISC20PERCEN',
+                              hintStyle: TextStyle(color: Colors.grey.shade600),
                               prefixIcon: Padding(
                                 padding: const EdgeInsets.all(12.0),
                                 child: SvgPicture.asset(

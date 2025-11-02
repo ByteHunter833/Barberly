@@ -27,7 +27,7 @@ class ApiService {
     if (response.statusCode == 200 || response.statusCode == 201) {
       return jsonDecode(response.body);
     } else {
-      throw Exception('Ошибка отправки: ${response.statusCode}');
+      throw Exception('Ошибка отправки: ${response.body}');
     }
   }
 }

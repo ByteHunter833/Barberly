@@ -25,9 +25,8 @@ class _AuthScreenState extends State<AuthScreen> {
       switchInCurve: Curves.easeOutBack,
       switchOutCurve: Curves.easeInBack,
       transitionBuilder: (Widget child, Animation<double> animation) {
-        // ✨ Комбинация fade + slide
         final slideAnimation = Tween<Offset>(
-          begin: const Offset(0.1, 0), // справа налево
+          begin: const Offset(0.1, 0),
           end: Offset.zero,
         ).animate(animation);
 

@@ -1,6 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
+import 'package:gobar/models/chat_message.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
@@ -250,19 +251,4 @@ class MessageStatusDot extends StatelessWidget {
       child: const Icon(Icons.done, size: 12, color: Colors.white),
     );
   }
-}
-
-// --- Model ---
-enum MessageStatus { notSent, notView, viewed }
-
-class ChatMessage {
-  final String text;
-  final bool isSender;
-  final MessageStatus messageStatus;
-
-  ChatMessage({
-    required this.text,
-    required this.isSender,
-    required this.messageStatus,
-  });
 }

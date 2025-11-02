@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:gobar/service/api_service.dart';
+import 'package:gobar/services/api_service.dart';
 
 final apiServiceprovider = Provider<ApiService>((ref) {
   return ApiService();
@@ -53,6 +53,18 @@ class AuthController extends StateNotifier<AuthState> {
       final user = res['user'];
 
       state = state.copyWith(user: user, status: AsyncData(res));
+    } catch (e, st) {
+      state = state.copyWith(status: AsyncError(e, st));
+    }
+  }
+
+  Future<void> resendCode(String phone) async {
+    state = state.copyWith(status: const AsyncLoading());
+    try {
+      final api = ref.read(apiServiceprovider);
+      final res = await api.postData('resend', {'phone': phone});
+
+      state = state.copyWith(status: AsyncData(res));
     } catch (e, st) {
       state = state.copyWith(status: AsyncError(e, st));
     }

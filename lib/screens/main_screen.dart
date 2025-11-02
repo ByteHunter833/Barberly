@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gobar/screens/booking/booking_screen.dart';
 import 'package:gobar/screens/chat/chat_screen.dart';
-import 'package:gobar/screens/home_page.dart';
+import 'package:gobar/screens/home/home_page.dart';
 import 'package:gobar/screens/profile/profile_screen.dart';
-import 'package:gobar/service/localstorage_service.dart';
+import 'package:gobar/services/localstorage_service.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
