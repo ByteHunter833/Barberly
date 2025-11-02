@@ -64,17 +64,17 @@ jobs:
           end' >> ios/Podfile
           fi
 
-      - name: Update iOS Deployment Target to 15.0
-        run: |
-          # Обновляем IPHONEOS_DEPLOYMENT_TARGET в project.pbxproj (все configs)
-          find ios -name "project.pbxproj" -exec sed -i '' 's/IPHONEOS_DEPLOYMENT_TARGET = 13.0;/IPHONEOS_DEPLOYMENT_TARGET = 15.0;/g' {} \;
-          # Проверяем
-          grep -r "IPHONEOS_DEPLOYMENT_TARGET" ios/Runner.xcodeproj/project.pbxproj
-
       - name: Install CocoaPods
         run: |
           cd ios
           pod install --repo-update
+
+      - name: Update iOS Deployment Target to 15.0 (post-pod)
+        run: |
+          # Агрессивный sed: Заменяем все варианты 13.0 на 15.0 (с пробелами/комментариями)
+          find ios -name "project.pbxproj" -exec sed -i '' -E 's/(IPHONEOS_DEPLOYMENT_TARGET = )[0-9.]+;/\115.0;/g' {} \;
+          # Проверяем все вхождения
+          grep -n "IPHONEOS_DEPLOYMENT_TARGET" ios/Runner.xcodeproj/project.pbxproj || echo "No matches found - check file"
 
       - name: Build for Simulator (Debug)
         run: flutter build ios --simulator --debug --no-codesign
@@ -83,7 +83,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: flutter-ios-simulator-app
-          path: build/ios/Debug-iphonesimulator/Runner.app
+          path: build/ios/iphonesimulator/Runner.app # Уточнил path (iphonesimulator, не Debug-...)
           retention-days: 7
 
       - name: Build Unsigned Release Archive (no certificate needed)
@@ -94,17 +94,18 @@ jobs:
           if [ -z "$IOS_CERTIFICATE" ]; then
             echo "No certificate found, building unsigned .xcarchive"
             flutter build ipa --release --no-codesign  # Создаёт .xcarchive в build/ios/archive/
-            # Debug: Полный ls текущей директории
+            # Debug: Полный ls
             pwd
             ls -la build/
             ls -la build/ios/
             ls -la build/ios/archive/
-            # Проверяем файл с абсолютным path (от root)
+            # Проверяем директорию (не файл!)
             ARCHIVE_PATH="$(pwd)/build/ios/archive/Runner.xcarchive"
-            if [ -f "$ARCHIVE_PATH" ]; then
-              echo "Archive created successfully at $ARCHIVE_PATH"
+            if [ -d "$ARCHIVE_PATH" ]; then  # Изменено: -d для dir
+              echo "Archive directory created successfully at $ARCHIVE_PATH"
+              du -sh "$ARCHIVE_PATH"  # Покажем размер
             else
-              echo "Archive not found at $ARCHIVE_PATH - check build errors above"
+              echo "Archive directory not found at $ARCHIVE_PATH - check build errors above"
               exit 1
             fi
           else
@@ -154,7 +155,7 @@ jobs:
             build/ios/ipa/*.ipa
             build/ios/archive/*.xcarchive  # Добавляем .xcarchive для unsigned
           retention-days: 7
-          if-no-files-found: error # Теперь ошибка, если ничего нет (для дебага)
+          if-no-files-found: error # Теперь ошибка, если ничего нет
 
       # Опционально: Авто-аплоад в TestFlight (с Fastlane, только если signed)
       - name: Upload to TestFlight (optional)
