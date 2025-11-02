@@ -1,7 +1,7 @@
 name: Build Flutter iOS for Simulator
 
 on:
-  workflow_dispatch: # Ручной запуск
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -13,13 +13,14 @@ concurrency:
 
 jobs:
   build:
+    name: Build Flutter iOS Simulator
     runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java
+      - name: Setup Java (for Flutter dependencies)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -28,25 +29,40 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.35.7'
+          flutter-version: '3.24.0'
           channel: 'stable'
 
       - name: Show Flutter version
         run: flutter --version
 
-      - name: Clean and get dependencies (always)
+      - name: Clean and get dependencies
         run: |
           flutter clean
-          rm -f pubspec.lock .packages  # Принудительно удаляем старые
           flutter pub get
 
-      - name: Regenerate iOS platform (if needed or to fix bundle ID)
+      - name: Create or update iOS platform and Podfile
         run: |
-          # Если ios повреждён (нет Podfile или старый bundle ID) — реген
-          if [ ! -f "ios/Podfile" ] || grep -q "com.example.gobar\|com.example.Barberly" "ios/Runner/Info.plist" 2>/dev/null; then
-            echo "Regenerating iOS with updated pubspec name..."
+          if [ ! -d "ios" ] || [ ! -f "ios/Podfile" ]; then
             rm -rf ios
             flutter create --platforms=ios .
+          fi
+          # Ensure Podfile has platform 15.0
+          if ! grep -q "platform :ios, '15.0'" ios/Podfile; then
+            sed -i '' '/# Uncomment this line/i\\
+            platform :ios, "15.0"\\
+            ' ios/Podfile
+          fi
+          # Ensure post_install sets deployment target
+          if ! grep -q "config.build_settings\['IPHONEOS_DEPLOYMENT_TARGET'\]" ios/Podfile; then
+            echo '
+          post_install do |installer|
+            installer.pods_project.targets.each do |target|
+              flutter_additional_ios_build_settings(target)
+              target.build_configurations.each do |config|
+                config.build_settings["IPHONEOS_DEPLOYMENT_TARGET"] = "15.0"
+              end
+            end
+          end' >> ios/Podfile
           fi
 
       - name: Install CocoaPods
