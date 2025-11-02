@@ -13,14 +13,13 @@ concurrency:
 
 jobs:
   build:
-    name: Build Flutter iOS Simulator
-    runs-on: macos-latest # Требуется macOS для iOS
+    runs-on: macos-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java (for Flutter dependencies)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -29,22 +28,28 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.24.0' # Укажи актуальную версию (проверь flutter --version локально)
+          flutter-version: '3.35.7'
           channel: 'stable'
 
       - name: Show Flutter version
         run: flutter --version
 
-      - name: Create iOS platform if missing
+      - name: Clean and get dependencies (always)
         run: |
-          if [ ! -d "ios" ] || [ ! -f "ios/Podfile" ]; then
+          flutter clean
+          rm -f pubspec.lock .packages  # Принудительно удаляем старые
+          flutter pub get
+
+      - name: Regenerate iOS platform (if needed or to fix bundle ID)
+        run: |
+          # Если ios повреждён (нет Podfile или старый bundle ID) — реген
+          if [ ! -f "ios/Podfile" ] || grep -q "com.example.gobar\|com.example.Barberly" "ios/Runner/Info.plist" 2>/dev/null; then
+            echo "Regenerating iOS with updated pubspec name..."
+            rm -rf ios
             flutter create --platforms=ios .
           fi
 
-      - name: Get dependencies
-        run: flutter pub get
-
-      - name: Install CocoaPods (for iOS dependencies)
+      - name: Install CocoaPods
         run: |
           cd ios
           pod install --repo-update
