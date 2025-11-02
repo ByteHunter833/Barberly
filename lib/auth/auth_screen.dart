@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:barberly/screens/auth/login_screen.dart';
-import 'package:barberly/screens/auth/sign_up_screen.dart';
+import 'package:barberly/auth/login_screen.dart';
+import 'package:barberly/auth/sign_up_screen.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});

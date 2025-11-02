@@ -32,6 +32,11 @@ class LocalStorage {
     await prefs.remove(_keyToken);
   }
 
+  static Future<void> clearUserInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_username);
+  }
+
   static Future<void> setOnboardingShown() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyOnboarding, true);

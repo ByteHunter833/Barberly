@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/screens/booking/booking_succes_screen.dart';
+import 'package:barberly/roles/user/screens/booking/booking_succes_screen.dart';
 
 class YourAppointmentScreen extends StatefulWidget {
   const YourAppointmentScreen({super.key});

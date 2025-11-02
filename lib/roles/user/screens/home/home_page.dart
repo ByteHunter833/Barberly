@@ -1,9 +1,9 @@
+import 'package:barberly/roles/user/screens/barbers/barber_detail_screen.dart';
+import 'package:barberly/roles/user/screens/barbers/explore_barbers.dart';
+import 'package:barberly/roles/user/widgets/banner_home.dart';
+import 'package:barberly/roles/user/widgets/filter_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/screens/barbers/barber_detail_screen.dart';
-import 'package:barberly/screens/barbers/explore_barbers.dart';
-import 'package:barberly/widgets/banner_home.dart';
-import 'package:barberly/widgets/filter_bottom_sheet.dart';
 import 'package:lucide_icons/lucide_icons.dart'; // ⚡️ Удобная иконка для локации
 
 class HomePage extends StatefulWidget {
@@ -94,7 +94,7 @@ class _HomePageState extends State<HomePage> {
                     side: const BorderSide(color: Color(0xff363062)),
                   ),
 
-                  onPressed: () {
+                  onPressed: () async {
                     Navigator.push(
                       context,
                       MaterialPageRoute(

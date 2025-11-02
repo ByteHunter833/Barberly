@@ -1,21 +1,24 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/roles/user/screens/profile/about.dart';
+import 'package:barberly/roles/user/screens/profile/account_details.dart';
+import 'package:barberly/roles/user/screens/profile/help.dart';
+import 'package:barberly/roles/user/screens/profile/security.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/screens/profile/about.dart';
-import 'package:barberly/screens/profile/account_details.dart';
-import 'package:barberly/screens/profile/help.dart';
-import 'package:barberly/screens/profile/security.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+class ProfileScreen extends ConsumerStatefulWidget {
+  final String user;
+  const ProfileScreen({super.key, required this.user});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   bool isNotificationOn = true;
   void _goToNextPage(title) {
     Widget page = const Security();
@@ -48,14 +51,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
+  Future<void> logOut() async {
+    try {
+      ref.watch(authControllerProvider.notifier).logOut();
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authControllerProvider);
+
+    ref.listen(authControllerProvider, (previous, next) {
+      if (previous?.user != null && next.user == null) {
+        Navigator.of(context).pushReplacementNamed('/auth');
+      }
+    });
     return Scaffold(
       backgroundColor: const Color(0xff363062),
       body: SafeArea(
         child: Column(
           children: [
-            // ===== Верхняя часть =====
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
               color: const Color(0xff363062),
@@ -100,10 +117,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 35,
-                        backgroundImage: NetworkImage(
-                          'https://i.pravatar.cc/150?img=12',
+                        backgroundColor: Colors.grey,
+
+                        child: Text(
+                          widget.user.isNotEmpty
+                              ? widget.user.substring(0, 1)
+                              : '',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -112,9 +137,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         children: [
                           Row(
                             children: [
-                              const Text(
-                                'Joe Samanta',
-                                style: TextStyle(
+                              Text(
+                                widget.user,
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 20,
                                   fontWeight: FontWeight.bold,
@@ -248,7 +273,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {},
+                          onPressed: authState.status.isLoading ? null : logOut,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xff363062),
                             shape: RoundedRectangleBorder(
@@ -256,14 +281,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          child: const Text(
-                            'Log out',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                          child: authState.status.isLoading
+                              ? const CircularProgressIndicator(
+                                  color: Colors.white,
+                                )
+                              : const Text(
+                                  'Log out',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                         ),
                       ),
                     ],

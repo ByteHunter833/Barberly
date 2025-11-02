@@ -1,11 +1,11 @@
+import 'package:barberly/roles/user/screens/booking/booking_screen.dart';
+import 'package:barberly/roles/user/screens/chat/chat_screen.dart';
+import 'package:barberly/roles/user/screens/home/home_page.dart';
+import 'package:barberly/roles/user/screens/profile/profile_screen.dart';
+import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/screens/booking/booking_screen.dart';
-import 'package:barberly/screens/chat/chat_screen.dart';
-import 'package:barberly/screens/home/home_page.dart';
-import 'package:barberly/screens/profile/profile_screen.dart';
-import 'package:barberly/services/localstorage_service.dart';
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -32,6 +32,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _onItemTapped(int index) {
+    // final user = await LocalStorage.getUserName();
+    // print(user);
+
     setState(() => _selectedIndex = index);
   }
 
@@ -50,7 +53,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       HomePage(user: _username ?? ''), // передаем уже готовую строку
       const BookingDetailScreen(),
       const ChatScreen(),
-      const ProfileScreen(),
+      ProfileScreen(user: _username ?? ''),
     ];
 
     return Scaffold(

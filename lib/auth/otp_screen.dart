@@ -2,11 +2,11 @@
 
 import 'dart:async';
 
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/services/localstorage_service.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key});
@@ -18,11 +18,20 @@ class OtpScreen extends ConsumerStatefulWidget {
 class _OtpScreenState extends ConsumerState<OtpScreen> {
   int _seconds = 60;
   Timer? _timer;
+  String? displayedCode; // Изменено на String? (OTP-код — строка, не int)
 
   @override
   void initState() {
     super.initState();
     _startTimer();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Теперь context готов для inherited widgets (ModalRoute, providers)
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
+    displayedCode = args?['otp']['code']?.toString() ?? '';
   }
 
   void _startTimer() {
@@ -32,9 +41,17 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
       if (_seconds == 0) {
         timer.cancel();
       } else {
-        setState(() => _seconds--);
+        if (mounted) {
+          setState(() => _seconds--); // Обновляем UI, если widget жив
+        }
       }
     });
+  }
+
+  // Метод для очистки полей (через key формы)
+  void _clearOtpFields() {
+    final formState = _otpFormKey.currentState;
+    formState?.clearFields();
   }
 
   @override
@@ -43,11 +60,13 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
     super.dispose();
   }
 
+  final GlobalKey<_OtpFormState> _otpFormKey =
+      GlobalKey<_OtpFormState>(); // Key для формы
+
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments as Map?;
+    final args = ModalRoute.of(context)?.settings.arguments as Map?;
     final phone = args?['otp']['phone'] ?? '';
-    final code = args?['otp']['code'] ?? '';
 
     final authState = ref.watch(authControllerProvider);
 
@@ -58,10 +77,16 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
           /// If resend
           if (data['message'] == 'Yangi tasdiqlash kodi yuborildi') {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(const SnackBar(content: Text('New code sent!')));
-            _startTimer();
+            if (mounted) {
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('New code sent!')));
+            }
+            setState(() {
+              displayedCode = null; // Скрываем старый код
+              _startTimer(); // Перезапуск таймера
+            });
+            _clearOtpFields(); // Очищаем поля OTP
             return;
           }
 
@@ -70,13 +95,21 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
             final user = data['user']['name'];
             await LocalStorage.saveToken(data['token']);
             await LocalStorage.saveUsername(user);
-            Navigator.pushReplacementNamed(context, '/main');
+            if (mounted) {
+              Navigator.pushNamedAndRemoveUntil(
+                context,
+                '/main',
+                (route) => false,
+              );
+            }
           }
         },
         error: (error, _) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(error.toString())));
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(error.toString())));
+          }
         },
       );
     });
@@ -101,7 +134,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'We sent a code to $phone, $code',
+                  displayedCode != null && displayedCode!.isNotEmpty
+                      ? 'We sent a code to $phone: $displayedCode' // Показываем код, если есть
+                      : 'New code sent to $phone', // После resend — без кода
                   style: const TextStyle(
                     color: Color(0xFF757575),
                     fontSize: 15,
@@ -111,6 +146,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 const SizedBox(height: 40),
 
                 OtpForm(
+                  key: _otpFormKey,
                   onVerify: (code) {
                     ref
                         .read(authControllerProvider.notifier)
@@ -171,6 +207,17 @@ class _OtpFormState extends State<OtpForm> {
     (_) => TextEditingController(),
   );
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
+
+  // Публичный метод для очистки полей (вызывается извне через key)
+  void clearFields() {
+    for (var c in _controllers) {
+      c.clear();
+    }
+    // Фокус на первое поле
+    if (_focusNodes.isNotEmpty) {
+      _focusNodes[0].requestFocus();
+    }
+  }
 
   @override
   void dispose() {

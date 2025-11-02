@@ -1,6 +1,6 @@
+import 'package:barberly/roles/user/screens/chat/message_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:barberly/screens/chat/message_screen.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
 class ChatScreen extends StatefulWidget {
@@ -59,6 +59,7 @@ class _ChatScreenState extends State<ChatScreen>
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
+        leading: null,
         backgroundColor: const Color(0xff363062),
         title: const Text(
           'Chat',

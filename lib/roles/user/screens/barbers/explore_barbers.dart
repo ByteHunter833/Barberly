@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:barberly/screens/barbers/barber_detail_screen.dart';
+import 'package:barberly/roles/user/screens/barbers/barber_detail_screen.dart';
 
 class ExploreBarbers extends StatefulWidget {
   const ExploreBarbers({super.key});

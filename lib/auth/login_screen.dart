@@ -1,11 +1,11 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/roles/user/widgets/my_textfield.dart';
+import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/services/localstorage_service.dart';
-import 'package:barberly/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {

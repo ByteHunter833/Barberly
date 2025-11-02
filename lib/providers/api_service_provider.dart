@@ -1,7 +1,9 @@
 import 'dart:async';
+
+import 'package:barberly/services/api_service.dart';
+import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:barberly/services/api_service.dart';
 
 final apiServiceprovider = Provider<ApiService>((ref) {
   return ApiService();
@@ -79,6 +81,17 @@ class AuthController extends StateNotifier<AuthState> {
       final user = res['user'];
 
       state = state.copyWith(user: user, status: AsyncData(res));
+    } catch (e, st) {
+      state = state.copyWith(status: AsyncError(e, st));
+    }
+  }
+
+  Future<void> logOut() async {
+    state = state.copyWith(status: const AsyncLoading());
+    try {
+      await LocalStorage.clearToken();
+      await LocalStorage.clearUserInfo();
+      state = AuthState(user: null, status: const AsyncData(null));
     } catch (e, st) {
       state = state.copyWith(status: AsyncError(e, st));
     }
