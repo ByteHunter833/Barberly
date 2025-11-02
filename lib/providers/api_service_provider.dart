@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:gobar/services/api_service.dart';
+import 'package:barberly/services/api_service.dart';
 
 final apiServiceprovider = Provider<ApiService>((ref) {
   return ApiService();

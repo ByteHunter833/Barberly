@@ -5,8 +5,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gobar/providers/api_service_provider.dart';
-import 'package:gobar/services/localstorage_service.dart';
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/services/localstorage_service.dart';
 
 class OtpScreen extends ConsumerStatefulWidget {
   const OtpScreen({super.key});

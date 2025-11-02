@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gobar/screens/auth/auth_screen.dart';
-import 'package:gobar/screens/main_screen.dart';
-import 'package:gobar/screens/onboarding_screen.dart';
-import 'package:gobar/services/localstorage_service.dart';
+import 'package:barberly/screens/auth/auth_screen.dart';
+import 'package:barberly/screens/main_screen.dart';
+import 'package:barberly/screens/onboarding_screen.dart';
+import 'package:barberly/services/localstorage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SplashScreen extends StatefulWidget {

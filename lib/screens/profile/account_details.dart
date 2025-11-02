@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:gobar/widgets/my_textfield.dart';
+import 'package:barberly/widgets/my_textfield.dart';
 
 class AccountDetails extends StatefulWidget {
   const AccountDetails({super.key});

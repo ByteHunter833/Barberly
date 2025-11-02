@@ -1,7 +1,7 @@
 // ignore_for_file: library_private_types_in_public_api, deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:gobar/screens/booking/booking_appointment.dart';
+import 'package:barberly/screens/booking/booking_appointment.dart';
 
 class BarberDetailScreen extends StatefulWidget {
   const BarberDetailScreen({super.key});

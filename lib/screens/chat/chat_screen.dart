@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:gobar/screens/chat/message_screen.dart';
+import 'package:barberly/screens/chat/message_screen.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
 class ChatScreen extends StatefulWidget {

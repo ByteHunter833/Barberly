@@ -2,10 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:gobar/screens/profile/about.dart';
-import 'package:gobar/screens/profile/account_details.dart';
-import 'package:gobar/screens/profile/help.dart';
-import 'package:gobar/screens/profile/security.dart';
+import 'package:barberly/screens/profile/about.dart';
+import 'package:barberly/screens/profile/account_details.dart';
+import 'package:barberly/screens/profile/help.dart';
+import 'package:barberly/screens/profile/security.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends StatefulWidget {

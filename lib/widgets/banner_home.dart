@@ -1,5 +1,5 @@
+import 'package:barberly/screens/barbers/explore_barbers.dart';
 import 'package:flutter/material.dart';
-import 'package:gobar/screens/barbers/explore_barbers.dart';
 
 class BannerHome extends StatelessWidget {
   const BannerHome({super.key});

@@ -1,11 +1,11 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gobar/firebase_options.dart';
-import 'package:gobar/screens/auth/auth_screen.dart';
-import 'package:gobar/screens/auth/otp_screen.dart';
-import 'package:gobar/screens/main_screen.dart';
-import 'package:gobar/screens/splash_screen.dart';
+import 'package:barberly/firebase_options.dart';
+import 'package:barberly/screens/auth/auth_screen.dart';
+import 'package:barberly/screens/auth/otp_screen.dart';
+import 'package:barberly/screens/main_screen.dart';
+import 'package:barberly/screens/splash_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 void main() async {

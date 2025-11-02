@@ -1,8 +1,8 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:gobar/providers/api_service_provider.dart';
-import 'package:gobar/widgets/my_textfield.dart';
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {

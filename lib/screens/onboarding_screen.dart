@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:flutter/material.dart';
-import 'package:gobar/screens/auth/auth_screen.dart';
-import 'package:gobar/services/localstorage_service.dart';
+import 'package:barberly/screens/auth/auth_screen.dart';
+import 'package:barberly/services/localstorage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});

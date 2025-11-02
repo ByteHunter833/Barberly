@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:flutter/material.dart';
-import 'package:gobar/models/chat_message.dart';
+import 'package:barberly/models/chat_message.dart';
 
 class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
