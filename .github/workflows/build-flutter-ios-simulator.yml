@@ -85,6 +85,14 @@ jobs:
           if [ -z "$IOS_CERTIFICATE" ]; then
             echo "No certificate found, building unsigned .xcarchive"
             flutter build ipa --release --no-codesign  # Создаёт .xcarchive в build/ios/archive/
+            # Debug: Проверим, что создалось
+            ls -la build/ios/archive/
+            if [ -f "build/ios/archive/Runner.xcarchive" ]; then
+              echo "Archive created successfully"
+            else
+              echo "Archive not found - check build errors above"
+              exit 1
+            fi
           else
             echo "Certificate found, skipping unsigned build"
           fi
@@ -117,6 +125,8 @@ jobs:
 
           # Билд IPA
           flutter build ipa --release --export-options-plist=ios/ExportOptions.plist
+          # Debug: Проверим IPA
+          ls -la build/ios/ipa/
 
           # Очисти keychain
           security delete-keychain build.keychain
