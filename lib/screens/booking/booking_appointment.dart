@@ -2,8 +2,8 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
-import 'package:barberly/roles/user/screens/booking/your_appointment_screen.dart';
-import 'package:barberly/roles/user/widgets/data_picker.dart';
+import 'package:barberly/screens/booking/your_appointment_screen.dart';
+import 'package:barberly/widgets/data_picker.dart';
 
 class BookingAppointment extends StatefulWidget {
   const BookingAppointment({super.key});

@@ -1,4 +1,4 @@
-import 'package:barberly/roles/user/screens/barbers/explore_barbers.dart';
+import 'package:barberly/screens/barbers/explore_barbers.dart';
 import 'package:flutter/material.dart';
 
 class BannerHome extends StatelessWidget {
@@ -8,7 +8,7 @@ class BannerHome extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 225,
-      width: 366,
+      width: double.infinity,
       decoration: BoxDecoration(
         color: const Color(0xffF99417),
         borderRadius: BorderRadius.circular(12),

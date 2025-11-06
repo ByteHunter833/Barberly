@@ -1,8 +1,8 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/roles/user/widgets/my_textfield.dart';
 import 'package:barberly/services/localstorage_service.dart';
+import 'package:barberly/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -43,11 +43,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
     ref.listen(authControllerProvider, (prev, next) {
       next.status.whenOrNull(
-        data: (data) async {
-          final user = data['user']['name'];
+        data: (userdata) async {
+          print(userdata);
+          final username = userdata['data']['user']['name'];
+          final token = userdata['data']['token'];
 
-          await LocalStorage.saveToken(data['token']);
-          await LocalStorage.saveUsername(user);
+          await LocalStorage.saveToken(token);
+          await LocalStorage.saveUsername(username);
           Navigator.pushReplacementNamed(context, '/main');
         },
         error: (err, _) {
@@ -65,10 +67,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: Image.asset(
-              'assets/images/surface_login.png',
-              fit: BoxFit.contain,
+            child: Container(
+              decoration: const BoxDecoration(color: Color(0xDBDAC614)),
+              child: Image.asset(
+                'assets/images/surface_login.png',
+                fit: BoxFit.cover,
+              ),
             ),
+          ),
+          Positioned(
+            top: 100,
+            left: 0,
+            right: 0,
+            child: Image.asset('assets/images/login_avatar.png'),
           ),
           Align(
             alignment: Alignment.bottomCenter,

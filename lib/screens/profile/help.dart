@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/roles/user/widgets/my_textfield.dart';
+import 'package:barberly/widgets/my_textfield.dart';
 
 class Help extends StatelessWidget {
   const Help({super.key});

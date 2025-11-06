@@ -1,9 +1,7 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'dart:async';
-
+import 'package:barberly/models/user_credentils.dart';
 import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,104 +14,11 @@ class OtpScreen extends ConsumerStatefulWidget {
 }
 
 class _OtpScreenState extends ConsumerState<OtpScreen> {
-  int _seconds = 60;
-  Timer? _timer;
-  String? displayedCode; // Изменено на String? (OTP-код — строка, не int)
-
-  @override
-  void initState() {
-    super.initState();
-    _startTimer();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    // Теперь context готов для inherited widgets (ModalRoute, providers)
-    final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    displayedCode = args?['otp']['code']?.toString() ?? '';
-  }
-
-  void _startTimer() {
-    _seconds = 60;
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_seconds == 0) {
-        timer.cancel();
-      } else {
-        if (mounted) {
-          setState(() => _seconds--); // Обновляем UI, если widget жив
-        }
-      }
-    });
-  }
-
-  // Метод для очистки полей (через key формы)
-  void _clearOtpFields() {
-    final formState = _otpFormKey.currentState;
-    formState?.clearFields();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  final GlobalKey<_OtpFormState> _otpFormKey =
-      GlobalKey<_OtpFormState>(); // Key для формы
+  final GlobalKey<_OtpFormState> _otpFormKey = GlobalKey<_OtpFormState>();
 
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)?.settings.arguments as Map?;
-    final phone = args?['otp']['phone'] ?? '';
-
-    final authState = ref.watch(authControllerProvider);
-
-    ref.listen(authControllerProvider, (previous, next) {
-      next.status.whenOrNull(
-        data: (data) async {
-          debugPrint('Response: $data');
-
-          /// If resend
-          if (data['message'] == 'Yangi tasdiqlash kodi yuborildi') {
-            if (mounted) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('New code sent!')));
-            }
-            setState(() {
-              displayedCode = null; // Скрываем старый код
-              _startTimer(); // Перезапуск таймера
-            });
-            _clearOtpFields(); // Очищаем поля OTP
-            return;
-          }
-
-          /// Verify success
-          if (data['token'] != null) {
-            final user = data['user']['name'];
-            await LocalStorage.saveToken(data['token']);
-            await LocalStorage.saveUsername(user);
-            if (mounted) {
-              Navigator.pushNamedAndRemoveUntil(
-                context,
-                '/main',
-                (route) => false,
-              );
-            }
-          }
-        },
-        error: (error, _) {
-          if (mounted) {
-            ScaffoldMessenger.of(
-              context,
-            ).showSnackBar(SnackBar(content: Text(error.toString())));
-          }
-        },
-      );
-    });
-
+    final args = ModalRoute.of(context)!.settings.arguments as UserCredentils;
     return Scaffold(
       backgroundColor: const Color(0xffF9F9FB),
       body: SafeArea(
@@ -134,9 +39,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  displayedCode != null && displayedCode!.isNotEmpty
-                      ? 'We sent a code to $phone: $displayedCode' // Показываем код, если есть
-                      : 'New code sent to $phone', // После resend — без кода
+                  'We sent a code to +${args.phone}. Test code ${args.code.toString()}.',
                   style: const TextStyle(
                     color: Color(0xFF757575),
                     fontSize: 15,
@@ -145,42 +48,9 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
                 ),
                 const SizedBox(height: 40),
 
-                OtpForm(
-                  key: _otpFormKey,
-                  onVerify: (code) {
-                    ref
-                        .read(authControllerProvider.notifier)
-                        .verifyOtp(phone, code);
-                  },
-                  loading: authState.status.isLoading,
-                ),
+                OtpForm(key: _otpFormKey),
 
                 const SizedBox(height: 30),
-
-                /// RESEND BUTTON
-                Center(
-                  child: TextButton(
-                    onPressed: _seconds > 0 || authState.status.isLoading
-                        ? null
-                        : () {
-                            ref
-                                .read(authControllerProvider.notifier)
-                                .resendCode(phone);
-                          },
-                    child: Text(
-                      _seconds > 0
-                          ? 'Resend code in $_seconds s'
-                          : 'Resend Code',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: _seconds > 0
-                            ? Colors.grey
-                            : const Color(0xff363062),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
@@ -192,10 +62,7 @@ class _OtpScreenState extends ConsumerState<OtpScreen> {
 
 /// OTP FORM
 class OtpForm extends StatefulWidget {
-  final void Function(String code) onVerify;
-  final bool loading;
-
-  const OtpForm({super.key, required this.onVerify, required this.loading});
+  const OtpForm({super.key});
 
   @override
   State<OtpForm> createState() => _OtpFormState();
@@ -208,12 +75,11 @@ class _OtpFormState extends State<OtpForm> {
   );
   final List<FocusNode> _focusNodes = List.generate(4, (_) => FocusNode());
 
-  // Публичный метод для очистки полей (вызывается извне через key)
   void clearFields() {
     for (var c in _controllers) {
       c.clear();
     }
-    // Фокус на первое поле
+
     if (_focusNodes.isNotEmpty) {
       _focusNodes[0].requestFocus();
     }
@@ -238,22 +104,13 @@ class _OtpFormState extends State<OtpForm> {
     }
   }
 
-  void _validateCode() {
-    final code = _controllers.map((c) => c.text).join();
-    if (code.length < 4) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Enter 4 digits'),
-          backgroundColor: Colors.redAccent,
-        ),
-      );
-      return;
-    }
-    widget.onVerify(code);
+  String getEnteredCode() {
+    return _controllers.map((c) => c.text).join();
   }
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments as UserCredentils;
     return Column(
       children: [
         Row(
@@ -295,22 +152,65 @@ class _OtpFormState extends State<OtpForm> {
         ),
         const SizedBox(height: 36),
 
-        ElevatedButton(
-          onPressed: widget.loading ? null : _validateCode,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xff363062),
-            foregroundColor: Colors.white,
-            minimumSize: const Size(double.infinity, 54),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-          ),
-          child: widget.loading
-              ? const CircularProgressIndicator(color: Colors.white)
-              : const Text(
-                  'Verify Code',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+        Consumer(
+          builder: (context, ref, _) {
+            final authState = ref.watch(authControllerProvider);
+
+            return ElevatedButton(
+              onPressed: authState.status is AsyncLoading
+                  ? null
+                  : () async {
+                      final enteredCode = getEnteredCode();
+                      if (enteredCode.length != 4) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter all 4 digits'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      try {
+                        await ref
+                            .read(authControllerProvider.notifier)
+                            .verifyOtp(args.phone, enteredCode);
+
+                        Navigator.of(
+                          context,
+                        ).pushNamedAndRemoveUntil('/main', (_) => false);
+                      } catch (e) {
+                        ScaffoldMessenger.of(
+                          context,
+                        ).showSnackBar(SnackBar(content: Text(e.toString())));
+                        clearFields();
+                      }
+                    },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff363062),
+                foregroundColor: Colors.white,
+                minimumSize: const Size(double.infinity, 54),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
+              ),
+              child: authState.status is AsyncLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Verify Code',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 17,
+                      ),
+                    ),
+            );
+          },
         ),
       ],
     );

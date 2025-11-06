@@ -1,10 +1,10 @@
-import 'package:barberly/roles/user/screens/barbers/barber_detail_screen.dart';
-import 'package:barberly/roles/user/screens/barbers/explore_barbers.dart';
-import 'package:barberly/roles/user/widgets/banner_home.dart';
-import 'package:barberly/roles/user/widgets/filter_bottom_sheet.dart';
+import 'package:barberly/screens/barbers/barber_detail_screen.dart';
+import 'package:barberly/screens/barbers/explore_barbers.dart';
+import 'package:barberly/widgets/banner_home.dart';
+import 'package:barberly/widgets/filter_bottom_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:lucide_icons/lucide_icons.dart'; // ⚡️ Удобная иконка для локации
+import 'package:lucide_icons/lucide_icons.dart';
 
 class HomePage extends StatefulWidget {
   final String user;
@@ -179,7 +179,15 @@ Widget _mostRecommend() {
         height: 216,
         child: Stack(
           children: [
-            Image.asset('assets/images/recommended.png'),
+            Positioned.fill(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/recommended.png',
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
             Positioned(
               bottom: -5,
               right: -2,

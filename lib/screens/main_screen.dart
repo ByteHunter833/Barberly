@@ -1,7 +1,7 @@
-import 'package:barberly/roles/user/screens/booking/booking_screen.dart';
-import 'package:barberly/roles/user/screens/chat/chat_screen.dart';
-import 'package:barberly/roles/user/screens/home/home_page.dart';
-import 'package:barberly/roles/user/screens/profile/profile_screen.dart';
+import 'package:barberly/screens/booking/booking_screen.dart';
+import 'package:barberly/screens/chat/chat_screen.dart';
+import 'package:barberly/screens/home/home_page.dart';
+import 'package:barberly/screens/profile/profile_screen.dart';
 import 'package:barberly/services/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

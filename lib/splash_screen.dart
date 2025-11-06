@@ -3,8 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:barberly/auth/auth_screen.dart';
-import 'package:barberly/roles/user/screens/main_screen.dart';
-import 'package:barberly/roles/onboarding_screen.dart';
+import 'package:barberly/screens/main_screen.dart';
+import 'package:barberly/onboarding_screen.dart';
 import 'package:barberly/services/localstorage_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 

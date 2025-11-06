@@ -1,8 +1,9 @@
+import 'package:barberly/models/user_credentils.dart';
+import 'package:barberly/providers/api_service_provider.dart';
+import 'package:barberly/widgets/my_textfield.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/roles/user/widgets/my_textfield.dart';
 import 'package:phone_input/phone_input_package.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
@@ -78,12 +79,15 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     ref.listen(authControllerProvider, (previous, next) {
       next.status.whenOrNull(
         data: (data) {
-          final otp = data;
+          print(data);
           Navigator.pushNamed(
             context,
             '/otp',
-            arguments: {'otp': otp},
-          ); // ✅ успешная регистрация
+            arguments: UserCredentils(
+              phone: data['data']['phone']?.toString() ?? '',
+              code: data['data']['code'] ?? 0,
+            ),
+          );
         },
         error: (error, _) {
           ScaffoldMessenger.of(

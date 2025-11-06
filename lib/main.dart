@@ -1,8 +1,8 @@
 import 'package:barberly/auth/auth_screen.dart';
 import 'package:barberly/auth/otp_screen.dart';
 import 'package:barberly/firebase_options.dart';
-import 'package:barberly/roles/splash_screen.dart';
-import 'package:barberly/roles/user/screens/main_screen.dart';
+import 'package:barberly/splash_screen.dart';
+import 'package:barberly/screens/main_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

@@ -1,10 +1,10 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:barberly/providers/api_service_provider.dart';
-import 'package:barberly/roles/user/screens/profile/about.dart';
-import 'package:barberly/roles/user/screens/profile/account_details.dart';
-import 'package:barberly/roles/user/screens/profile/help.dart';
-import 'package:barberly/roles/user/screens/profile/security.dart';
+import 'package:barberly/screens/profile/about.dart';
+import 'package:barberly/screens/profile/account_details.dart';
+import 'package:barberly/screens/profile/help.dart';
+import 'package:barberly/screens/profile/security.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -51,9 +51,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     );
   }
 
-  Future<void> logOut() async {
+  void logOut() async {
     try {
-      ref.watch(authControllerProvider.notifier).logOut();
+      await ref.read(authControllerProvider.notifier).logOut();
     } catch (e) {
       debugPrint(e.toString());
     }
@@ -64,8 +64,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authControllerProvider);
 
     ref.listen(authControllerProvider, (previous, next) {
-      if (previous?.user != null && next.user == null) {
-        Navigator.of(context).pushReplacementNamed('/auth');
+      print(
+        'Previous state: user=${previous?.user}, status=${previous?.status}',
+      );
+      print('Next state: user=${next.user}, status=${next.status}');
+
+      // Check both user==null and successful status
+      if (next.status is AsyncData && next.user == null) {
+        Navigator.of(
+          context,
+        ).pushNamedAndRemoveUntil('/auth', (route) => false);
       }
     });
     return Scaffold(

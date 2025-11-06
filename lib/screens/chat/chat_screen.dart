@@ -1,4 +1,4 @@
-import 'package:barberly/roles/user/screens/chat/message_screen.dart';
+import 'package:barberly/screens/chat/message_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
