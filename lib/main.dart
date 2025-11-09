@@ -1,8 +1,10 @@
-import 'package:barberly/auth/auth_screen.dart';
-import 'package:barberly/auth/otp_screen.dart';
+import 'package:barberly/core/network/api_service.dart';
+import 'package:barberly/features/auth/providers/auth_provider.dart';
+import 'package:barberly/features/auth/screens/auth_screen.dart';
+import 'package:barberly/features/auth/screens/otp_screen.dart';
 import 'package:barberly/firebase_options.dart';
-import 'package:barberly/splash_screen.dart';
-import 'package:barberly/screens/main_screen.dart';
+import 'package:barberly/features/main_screen.dart';
+import 'package:barberly/features/splash_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,7 +13,14 @@ import 'package:google_fonts/google_fonts.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const ProviderScope(child: MyApp()));
+  final api = ApiService();
+  await api.loadToken(); // <-- здесь загружаем токен из LocalStorage
+  runApp(
+    ProviderScope(
+      overrides: [apiServiceProvider.overrideWithValue(api)],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
