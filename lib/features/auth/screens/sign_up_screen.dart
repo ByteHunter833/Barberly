@@ -1,6 +1,7 @@
+import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
 import 'package:barberly/core/models/user_credentils.dart';
-import 'package:barberly/features/auth/providers/auth_provider.dart';
 import 'package:barberly/core/widgets/my_textfield.dart';
+import 'package:barberly/features/auth/providers/auth_provider.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -56,19 +57,40 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return null;
   }
 
+  String generateFirebaseEmail(String phone) {
+    final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+    return '$cleanPhone@yourapp.com';
+  }
+
   Future<void> register() async {
     if (_formKey.currentState!.validate()) {
       final rawPhone = _phoneController.value!.international;
       final phone = rawPhone.replaceAll(RegExp(r'\s+'), '');
-      debugPrint(rawPhone);
 
-      ref
-          .read(authControllerProvider.notifier)
-          .register(
-            _nameController.text.trim(),
-            phone,
-            _passwordController.text.trim(),
-          );
+      try {
+        // 1. Регистрируем в Laravel
+        final result = await ref
+            .read(authControllerProvider.notifier)
+            .register(
+              _nameController.text.trim(),
+              phone,
+              _passwordController.text.trim(),
+            );
+
+        await ref
+            .read(authServiceProvider)
+            .signUpWithEmailPassword(
+              generateFirebaseEmail(phone),
+              _passwordController.text.trim(),
+              _nameController.text.trim(),
+            );
+
+        // Навигация или сообщение об успехе
+        if (!mounted) return;
+      } catch (e) {
+        debugPrint('Registration error: $e');
+        // Показать ошибку пользовате9ю
+      }
     }
   }
 
@@ -161,7 +183,6 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                   ),
                   validator: PhoneValidator.validMobile(),
                 ),
-
                 const SizedBox(height: 10),
 
                 MyTextfield(

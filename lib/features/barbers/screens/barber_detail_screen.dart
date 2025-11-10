@@ -3,6 +3,7 @@
 import 'package:barberly/core/models/barber.dart';
 import 'package:barberly/features/booking/screens/booking_appointment.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class BarberDetailScreen extends StatefulWidget {
   final Barber barber;
@@ -18,6 +19,7 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
   late Animation<double> _animation;
   bool isFavorite = false;
   int selectedTabIndex = 0;
+  bool _isBookingLoading = false;
 
   @override
   void initState() {
@@ -44,6 +46,27 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
     super.dispose();
   }
 
+  Future<void> _navigateToBooking() async {
+    if (_isBookingLoading) return;
+
+    setState(() {
+      _isBookingLoading = true;
+    });
+
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const BookingAppointment()),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isBookingLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -61,9 +84,8 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                     bottomRight: Radius.circular(20),
                   ),
                   image: DecorationImage(
-                    image: NetworkImage(
-                      'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=300&fit=crop',
-                    ),
+                    image: AssetImage('assets/images/recommended.png'),
+
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -130,23 +152,44 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                       const SizedBox(height: 8),
 
                       // Location
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.location_on,
-                            size: 16,
-                            color: Colors.grey[600],
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${widget.barber.location} • ${widget.barber.distance!}',
-                            style: TextStyle(
-                              fontSize: 13,
+                      if (widget.barber.location != null)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16,
                               color: Colors.grey[600],
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.barber.distance != null
+                                  ? '${widget.barber.location} • ${widget.barber.distance}'
+                                  : widget.barber.location!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        )
+                      else
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.location_on,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Location not specified',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: 6),
 
                       // Rating
@@ -163,7 +206,7 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            '(24)',
+                            '(${double.parse(widget.barber.rating.toString()) >= 0 ? '24' : '0'})',
                             style: TextStyle(
                               fontSize: 13,
                               color: Colors.grey[600],
@@ -171,6 +214,28 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                           ),
                         ],
                       ),
+                      const SizedBox(height: 6),
+
+                      // Contact Info
+                      if (widget.barber.phone != null &&
+                          widget.barber.phone!.isNotEmpty)
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.phone,
+                              size: 16,
+                              color: Colors.grey[600],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              widget.barber.phone!,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
                       const SizedBox(height: 20),
 
                       // Action Buttons
@@ -178,17 +243,21 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildActionButton(
-                            icon: Icons.map_outlined,
+                            icon: SvgPicture.asset(
+                              'assets/icons/google_maps.svg',
+                              width: 24,
+                              height: 24,
+                            ),
                             label: 'Maps',
-                            color: Colors.blue,
+                            color: const Color(0xFF2C3E7C),
                           ),
                           _buildActionButton(
-                            icon: Icons.chat_bubble_outline,
+                            icon: SvgPicture.asset('assets/icons/chat.svg'),
                             label: 'Chat',
                             color: const Color(0xFF2C3E7C),
                           ),
                           _buildActionButton(
-                            icon: Icons.share_outlined,
+                            icon: const Icon(Icons.share_outlined),
                             label: 'Share',
                             color: Colors.grey[700]!,
                           ),
@@ -200,8 +269,11 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                             },
                             child: _buildActionButton(
                               icon: isFavorite
-                                  ? Icons.favorite
-                                  : Icons.favorite_border,
+                                  ? const Icon(
+                                      Icons.favorite,
+                                      color: Colors.grey,
+                                    )
+                                  : const Icon(Icons.favorite_border),
                               label: 'Favorite',
                               color: Colors.pink,
                             ),
@@ -274,29 +346,34 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const BookingAppointment(),
-                    ),
-                  );
-                },
+                onPressed: _isBookingLoading ? null : _navigateToBooking,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2C3E7C),
+                  disabledBackgroundColor: Colors.grey[400],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                   elevation: 0,
                 ),
-                child: const Text(
-                  'Booking Now',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isBookingLoading
+                    ? const SizedBox(
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Colors.white,
+                          ),
+                        ),
+                      )
+                    : const Text(
+                        'Booking Now',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ),
@@ -355,7 +432,7 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
   }
 
   Widget _buildActionButton({
-    required IconData icon,
+    required Widget icon,
     required String label,
     required Color color,
   }) {
@@ -367,7 +444,7 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
             color: color.withOpacity(0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icon, color: color, size: 22),
+          child: icon,
         ),
         const SizedBox(height: 6),
         Text(
@@ -388,34 +465,45 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          RichText(
-            text: TextSpan(
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[700],
-                height: 1.6,
-              ),
-              children: [
-                TextSpan(
-                  text: widget.barber.bio ?? '',
-                  style: const TextStyle(fontSize: 16, color: Colors.black),
+          // Bio Section
+          if (widget.barber.bio != null && widget.barber.bio!.isNotEmpty)
+            RichText(
+              text: TextSpan(
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey[700],
+                  height: 1.6,
                 ),
-                WidgetSpan(
-                  child: GestureDetector(
-                    onTap: () {},
-                    child: const Text(
-                      '   Read more...',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF2C3E7C),
-                        fontWeight: FontWeight.w600,
+                children: [
+                  TextSpan(
+                    text: widget.barber.bio!,
+                    style: const TextStyle(fontSize: 16, color: Colors.black),
+                  ),
+                  WidgetSpan(
+                    child: GestureDetector(
+                      onTap: () {},
+                      child: const Text(
+                        '   Read more...',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF2C3E7C),
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
+            )
+          else
+            Text(
+              'No bio available',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
             ),
-          ),
           const SizedBox(height: 24),
 
           // Opening Hours
@@ -424,40 +512,42 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
-          _buildHoursRow('Monday - friday', '09.00 am - 08.00 pm'),
+          _buildHoursRow('Monday - Friday', '09.00 am - 08.00 pm'),
           const SizedBox(height: 10),
           _buildHoursRow('Saturday - Sunday', '09.00 am - 09.00 pm'),
           const SizedBox(height: 24),
 
-          // Our Tim
+          // Contact Information
           const Text(
-            'Our Tim',
+            'Contact Information',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
-          _buildBarberCard(
-            name: 'Luther Hammes',
-            specialty: 'Specialist Haircut',
-            rating: 5.0,
-            image:
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-          ),
-          const SizedBox(height: 12),
-          _buildBarberCard(
-            name: 'Emanuel Bernier',
-            specialty: 'Specialist Coloring',
-            rating: 4.5,
-            image:
-                'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop',
-          ),
-          const SizedBox(height: 12),
-          _buildBarberCard(
-            name: 'Karl Vandervort',
-            specialty: 'Specialist Treatment',
-            rating: 4.5,
-            image:
-                'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=100&h=100&fit=crop',
-          ),
+          if (widget.barber.phone != null && widget.barber.phone!.isNotEmpty)
+            _buildInfoRow(
+              icon: Icons.phone,
+              label: 'Phone',
+              value: widget.barber.phone!,
+            ),
+          if (widget.barber.email != null && widget.barber.email!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: _buildInfoRow(
+                icon: Icons.email,
+                label: 'Email',
+                value: widget.barber.email!,
+              ),
+            ),
+          if ((widget.barber.phone == null || widget.barber.phone!.isEmpty) &&
+              (widget.barber.email == null || widget.barber.email!.isEmpty))
+            Text(
+              'No contact information available',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontStyle: FontStyle.italic,
+              ),
+            ),
           const SizedBox(height: 20),
         ],
       ),
@@ -465,19 +555,176 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
   }
 
   Widget _buildServiceTab() {
-    return const Center(
-      child: Text(
-        'Service Tab Content',
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-      ),
+    debugPrint(widget.barber.services.toString());
+    final services = widget.barber.services ?? [];
+
+    if (services.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.content_cut_outlined, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No services available',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      itemCount: services.length,
+      itemBuilder: (context, index) {
+        final service = services[index];
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey[300]!),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
+                      service['name'] ?? 'Service',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2C3E7C).withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '\$${service['price'] ?? 0}',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF2C3E7C),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Icon(Icons.access_time, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 6),
+                  Text(
+                    '${service['durationMinutes'] ?? 0} minutes',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                ],
+              ),
+              if (service['description'] != null &&
+                  service['description'].toString().isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  service['description'],
+                  style: TextStyle(fontSize: 13, color: Colors.grey[700]),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
 
   Widget _buildScheduleTab() {
-    return const Center(
-      child: Text(
-        'Schedule Tab Content',
-        style: TextStyle(fontSize: 16, color: Colors.grey),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Working Schedule',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 16),
+          _buildScheduleCard('Monday', '09:00 AM - 08:00 PM', true),
+          _buildScheduleCard('Tuesday', '09:00 AM - 08:00 PM', true),
+          _buildScheduleCard('Wednesday', '09:00 AM - 08:00 PM', true),
+          _buildScheduleCard('Thursday', '09:00 AM - 08:00 PM', true),
+          _buildScheduleCard('Friday', '09:00 AM - 08:00 PM', true),
+          _buildScheduleCard('Saturday', '09:00 AM - 09:00 PM', true),
+          _buildScheduleCard('Sunday', '09:00 AM - 09:00 PM', true),
+          const SizedBox(height: 20),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleCard(String day, String hours, bool isOpen) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isOpen ? Colors.white : Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isOpen ? Colors.grey[300]! : Colors.grey[200]!,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            day,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isOpen ? Colors.black87 : Colors.grey[600],
+            ),
+          ),
+          Row(
+            children: [
+              Text(
+                hours,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: isOpen ? Colors.black87 : Colors.grey[600],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: isOpen
+                      ? const Color(0xFF4CAF50).withOpacity(0.1)
+                      : Colors.grey[300],
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isOpen ? 'Open' : 'Closed',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: isOpen ? const Color(0xFF4CAF50) : Colors.grey[600],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -499,58 +746,34 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
     );
   }
 
-  Widget _buildBarberCard({
-    required String name,
-    required String specialty,
-    required double rating,
-    required String image,
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(radius: 26, backgroundImage: NetworkImage(image)),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  specialty,
-                  style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-                ),
-              ],
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: const Color(0xFF2C3E7C)),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
             ),
-          ),
-          Row(
-            children: [
-              const Icon(Icons.star, size: 16, color: Colors.amber),
-              const SizedBox(width: 4),
-              Text(
-                rating.toString(),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
+            const SizedBox(height: 2),
+            Text(
+              value,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

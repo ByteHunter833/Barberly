@@ -174,7 +174,7 @@ class _OtpFormState extends State<OtpForm> {
                         await ref
                             .read(authControllerProvider.notifier)
                             .verifyOtp(args.phone, enteredCode);
-
+                        if (mounted) {}
                         Navigator.of(
                           context,
                         ).pushNamedAndRemoveUntil('/main', (_) => false);

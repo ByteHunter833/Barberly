@@ -1,61 +1,52 @@
+import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
+import 'package:barberly/features/chat/providers/chat_provider.dart';
 import 'package:barberly/features/chat/screens/message_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart' show GoogleFonts;
 
-class ChatScreen extends StatefulWidget {
+class ChatScreen extends ConsumerStatefulWidget {
   const ChatScreen({super.key});
 
   @override
-  State<ChatScreen> createState() => _ChatScreenState();
+  ConsumerState<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen>
+class _ChatScreenState extends ConsumerState<ChatScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final List<String> tabs = ['Active Chat', 'Finished'];
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  User? get user {
+    final authState = ref.watch(authStateProvider);
+    return authState.maybeWhen(data: (user) => user, orElse: () => null);
+  }
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: tabs.length, vsync: this);
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _searchController.dispose();
     super.dispose();
   }
 
-  final List<Map<String, dynamic>> messages = [
-    {
-      'name': 'Varcity Barbershop',
-      'message': 'I want to consult on the latest haircut.',
-      'time': '16:30',
-      'unread': 0,
-      'avatar': 'https://i.pravatar.cc/150?img=1',
-      'online': true,
-    },
-    {
-      'name': 'Twinsky Monkey Barber',
-      'message': 'Is there a recommendation for...',
-      'time': '21:30',
-      'unread': 0,
-      'avatar': 'https://i.pravatar.cc/150?img=2',
-      'online': true,
-    },
-    {
-      'name': 'Baberman Haircut',
-      'message': 'Sorry, we serve from 7 am to 9 pm.',
-      'time': '18:00',
-      'unread': 2,
-      'avatar': 'https://i.pravatar.cc/150?img=3',
-      'online': false,
-    },
-  ];
-
   @override
   Widget build(BuildContext context) {
+    final currentUser = user;
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -89,20 +80,25 @@ class _ChatScreenState extends State<ChatScreen>
             ),
           ),
         ],
-        // bottom:
       ),
       body: Column(
         children: [
           const SizedBox(height: 24),
           _tabBar(_tabController, tabs),
-          _chatList(_tabController, tabs, messages),
+          _chatList(
+            _tabController,
+            tabs,
+            currentUser,
+            _searchController,
+            _searchQuery,
+          ),
         ],
       ),
     );
   }
 }
 
-Widget _tabBar(TabController tabController, List tabs) {
+Widget _tabBar(TabController tabController, List<String> tabs) {
   return Container(
     margin: const EdgeInsets.symmetric(horizontal: 20),
     decoration: BoxDecoration(
@@ -136,7 +132,13 @@ Widget _tabBar(TabController tabController, List tabs) {
   );
 }
 
-Widget _chatList(TabController tabController, List tabs, List messages) {
+Widget _chatList(
+  TabController tabController,
+  List<String> tabs,
+  User? user,
+  TextEditingController searchController,
+  String searchQuery,
+) {
   return Expanded(
     child: TabBarView(
       controller: tabController,
@@ -144,11 +146,10 @@ Widget _chatList(TabController tabController, List tabs, List messages) {
         return Column(
           children: [
             const SizedBox(height: 12),
-            _stories(messages),
-            const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: TextField(
+                controller: searchController,
                 decoration: InputDecoration(
                   hintText: 'Search chat',
                   hintStyle: TextStyle(color: Colors.grey.shade500),
@@ -158,6 +159,14 @@ Widget _chatList(TabController tabController, List tabs, List messages) {
                     padding: const EdgeInsets.all(12.0),
                     child: SvgPicture.asset('assets/icons/search.svg'),
                   ),
+                  suffixIcon: searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear, size: 20),
+                          onPressed: () {
+                            searchController.clear();
+                          },
+                        )
+                      : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -167,86 +176,94 @@ Widget _chatList(TabController tabController, List tabs, List messages) {
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: ListView.builder(
-                itemCount: messages.length,
-                itemBuilder: (context, index) {
-                  final msg = messages[index];
-                  return ListTile(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        PageRouteBuilder(
-                          pageBuilder:
-                              (context, animation, secondaryAnimation) =>
-                                  const MessagesScreen(),
-                          transitionsBuilder:
-                              (context, animation, secondaryAnimation, child) {
-                                final begin = const Offset(1.0, 0.0);
-                                final end = Offset.zero;
-                                final tween = Tween(begin: begin, end: end);
-                                final tweenanimation = animation.drive(tween);
-                                return SlideTransition(
-                                  position: tweenanimation,
-                                  child: child,
-                                );
-                              },
-                        ),
-                      );
-                    },
-                    leading: Stack(
-                      children: [
-                        CircleAvatar(
-                          backgroundImage: NetworkImage(msg['avatar']),
-                        ),
-                        if (msg['online'])
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: Colors.green,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.white,
-                                  width: 2,
+              child: Consumer(
+                builder: (context, ref, _) {
+                  final barbersAsync = ref.watch(chatControllerProvider);
+
+                  return barbersAsync.when(
+                    data: (barbers) {
+                      // Фильтрация барберов по поисковому запросу
+                      final filteredBarbers = searchQuery.isEmpty
+                          ? barbers
+                          : barbers.where((barber) {
+                              final name =
+                                  (barber['name'] as String?)?.toLowerCase() ??
+                                  '';
+                              final bio =
+                                  (barber['bio'] as String?)?.toLowerCase() ??
+                                  '';
+                              return name.contains(searchQuery) ||
+                                  bio.contains(searchQuery);
+                            }).toList();
+
+                      if (filteredBarbers.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.search_off,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                searchQuery.isEmpty
+                                    ? 'No chats available'
+                                    : 'No results found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
                                 ),
                               ),
+                            ],
+                          ),
+                        );
+                      }
+
+                      return ListView.builder(
+                        itemCount: filteredBarbers.length,
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        itemBuilder: (context, index) {
+                          final barber = filteredBarbers[index];
+                          return _ChatListTile(
+                            barber: barber,
+                            user: user,
+                            ref: ref,
+                          );
+                        },
+                      );
+                    },
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (err, _) => Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline,
+                            size: 64,
+                            color: Colors.red.shade300,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error loading chats',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
                             ),
                           ),
-                      ],
-                    ),
-                    title: Text(
-                      msg['name'],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      msg['message'],
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(msg['time'], style: const TextStyle(fontSize: 12)),
-                        if (msg['unread'] > 0)
-                          Container(
-                            margin: const EdgeInsets.only(top: 4),
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.purple,
-                              shape: BoxShape.circle,
+                          const SizedBox(height: 8),
+                          Text(
+                            err.toString(),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade500,
                             ),
-                            child: Text(
-                              msg['unread'].toString(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                              ),
-                            ),
+                            textAlign: TextAlign.center,
                           ),
-                      ],
+                        ],
+                      ),
                     ),
                   );
                 },
@@ -259,34 +276,122 @@ Widget _chatList(TabController tabController, List tabs, List messages) {
   );
 }
 
-Widget _stories(List messages) {
-  return SizedBox(
-    height: 60,
-    child: ListView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: const BoxDecoration(
-            color: Color(0xff363062),
-            shape: BoxShape.circle,
-          ),
-          child: const Icon(Icons.add, color: Colors.white),
-        ),
-        const SizedBox(width: 12),
-        ...messages.map(
-          (msg) => Padding(
-            padding: const EdgeInsets.only(right: 12),
+class _ChatListTile extends StatefulWidget {
+  final Map<String, dynamic> barber;
+  final User? user;
+  final WidgetRef ref;
 
-            child: CircleAvatar(
-              backgroundImage: NetworkImage(msg['avatar']),
-              radius: 31,
+  const _ChatListTile({
+    required this.barber,
+    required this.user,
+    required this.ref,
+  });
+
+  @override
+  State<_ChatListTile> createState() => _ChatListTileState();
+}
+
+class _ChatListTileState extends State<_ChatListTile> {
+  bool _isLoading = false;
+
+  Future<void> _openChat() async {
+    if (widget.user == null || _isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final bookingId = 'booking001';
+      final chatRoomId = await widget.ref
+          .read(chatControllerProvider.notifier)
+          .createChatRoom(
+            barberId: widget.barber['uid'],
+            clientName: widget.user!.displayName,
+            clientImageUrl: widget.user!.photoURL,
+            clientId: widget.user!.uid,
+            bookingId: bookingId,
+          );
+
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MessagesScreen(
+              chatRoomId: chatRoomId,
+              barberId: widget.barber['uid'],
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open chat: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      onTap: _isLoading ? null : _openChat,
+      enabled: !_isLoading,
+      leading: Stack(
+        children: [
+          CircleAvatar(
+            backgroundImage: NetworkImage(
+              widget.barber['imageUrl'] ??
+                  'https://i.postimg.cc/cCsYDjvj/user-2.png',
+            ),
+          ),
+          if (widget.barber['online'] ?? false)
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+        ],
+      ),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(
+              widget.barber['name'] ?? 'Unknown',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          if (_isLoading)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            ),
+        ],
+      ),
+      subtitle: Text(
+        widget.barber['bio'] ?? '',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
 }

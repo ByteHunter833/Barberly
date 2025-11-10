@@ -1,7 +1,8 @@
-import 'package:barberly/features/barbers/providers/barbers_provider.dart';
-import 'package:barberly/features/barbers/screens/barber_detail_screen.dart';
 import 'package:barberly/core/widgets/banner_home.dart';
 import 'package:barberly/core/widgets/filter_bottom_sheet.dart';
+import 'package:barberly/features/barbers/providers/barbers_provider.dart';
+import 'package:barberly/features/barbers/screens/barber_detail_screen.dart';
+import 'package:barberly/features/barbers/screens/explore_barbers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -16,13 +17,28 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
   @override
   void initState() {
     super.initState();
-    // Загружаем барберов при старте
+
     Future.microtask(
       () => ref.read(barbersControllerProvider.notifier).loadBarbers(),
     );
+
+    _searchController.addListener(() {
+      setState(() {
+        _searchQuery = _searchController.text.toLowerCase();
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -32,56 +48,170 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _header(),
-              const SizedBox(height: 24),
-              const BannerHome(),
-              const SizedBox(height: 24),
-              _searchBar(context),
-              const SizedBox(height: 24),
-              const Text(
-                'Most recommended',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-              const SizedBox(height: 10),
-              barbersState.status.when(
-                data: (barbers) =>
-                    _mostRecommendSection(context, barbersState.barbers),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, st) {
-                  print('error loading barbers: $e');
-                  return const Center(child: Text('Ошибка загрузки'));
-                },
-              ),
-              const SizedBox(height: 16),
-              Center(
-                child: OutlinedButton(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xff363062),
-                    side: const BorderSide(color: Color(0xff363062)),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            await ref.read(barbersControllerProvider.notifier).loadBarbers();
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _header(),
+                const SizedBox(height: 24),
+                const BannerHome(),
+                const SizedBox(height: 24),
+                _searchBar(context),
+                const SizedBox(height: 24),
+                const Text(
+                  'Most recommended',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                const SizedBox(height: 10),
+                barbersState.status.when(
+                  data: (_) {
+                    final filteredBarbers = _searchQuery.isEmpty
+                        ? barbersState.barbers
+                        : barbersState.barbers.where((barber) {
+                            final name = barber.name.toLowerCase();
+                            final location = (barber.location ?? '')
+                                .toLowerCase();
+                            return name.contains(_searchQuery) ||
+                                location.contains(_searchQuery);
+                          }).toList();
+
+                    if (filteredBarbers.isEmpty) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(32.0),
+                          child: Column(
+                            children: [
+                              Icon(
+                                _searchQuery.isEmpty
+                                    ? LucideIcons.users
+                                    : LucideIcons.searchX,
+                                size: 64,
+                                color: Colors.grey.shade400,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                _searchQuery.isEmpty
+                                    ? 'No barbers available'
+                                    : 'No barbers found',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              if (_searchQuery.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Try searching with different keywords',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    return _mostRecommendSection(context, filteredBarbers);
+                  },
+                  loading: () => const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: CircularProgressIndicator(),
+                    ),
                   ),
-                  onPressed: () {},
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'See All',
-                        style: TextStyle(
-                          color: Color(0xff363062),
-                          fontWeight: FontWeight.bold,
+                  error: (e, st) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Column(
+                          children: [
+                            Icon(
+                              LucideIcons.alertCircle,
+                              size: 64,
+                              color: Colors.red.shade300,
+                            ),
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Failed to load barbers',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              e.toString(),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade600,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                ref
+                                    .read(barbersControllerProvider.notifier)
+                                    .loadBarbers();
+                              },
+                              icon: const Icon(LucideIcons.refreshCw),
+                              label: const Text('Retry'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xff363062),
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(LucideIcons.arrowUpRightSquare),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                if (barbersState.barbers.isNotEmpty && _searchQuery.isEmpty)
+                  Center(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xff363062),
+                        side: const BorderSide(color: Color(0xff363062)),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ExploreBarbers(),
+                          ),
+                        );
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'See All',
+                            style: TextStyle(
+                              color: Color(0xff363062),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(LucideIcons.arrowUpRightSquare),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -107,7 +237,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             ),
             const SizedBox(height: 6),
             Text(
-              widget.user,
+              widget.user.isNotEmpty ? widget.user : 'Guest',
               style: const TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -118,10 +248,16 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         CircleAvatar(
           radius: 24,
-          backgroundColor: Colors.grey,
+          backgroundColor: const Color(0xff363062),
           child: Text(
-            widget.user.isNotEmpty ? widget.user.substring(0, 1) : '',
-            style: const TextStyle(color: Colors.white),
+            widget.user.isNotEmpty
+                ? widget.user.substring(0, 1).toUpperCase()
+                : 'G',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
         ),
       ],
@@ -133,6 +269,7 @@ class _HomePageState extends ConsumerState<HomePage> {
       children: [
         Expanded(
           child: TextField(
+            controller: _searchController,
             decoration: InputDecoration(
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -140,13 +277,24 @@ class _HomePageState extends ConsumerState<HomePage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Colors.blueAccent),
+                borderSide: const BorderSide(
+                  color: Color(0xff363062),
+                  width: 2,
+                ),
               ),
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(12.0),
                 child: SvgPicture.asset('assets/icons/search.svg'),
               ),
-              hintText: 'Search barber’s, haircut service',
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, size: 20),
+                      onPressed: () {
+                        _searchController.clear();
+                      },
+                    )
+                  : null,
+              hintText: "Search barber's, haircut service",
               hintStyle: const TextStyle(color: Color(0xff8683A1)),
               filled: true,
               fillColor: const Color(0xffEBF0F5),
@@ -177,22 +325,67 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Column(
       children: List.generate(barbers.length, (index) {
         final barber = barbers[index];
-        return GestureDetector(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BarberDetailScreen(barber: barber),
-              ),
-            );
-          },
-          child: Container(
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
+        return _BarberCard(barber: barber);
+      }),
+    );
+  }
+}
+
+class _BarberCard extends StatefulWidget {
+  final dynamic barber;
+
+  const _BarberCard({required this.barber});
+
+  @override
+  State<_BarberCard> createState() => _BarberCardState();
+}
+
+class _BarberCardState extends State<_BarberCard> {
+  bool _isLoading = false;
+
+  Future<void> _navigateToDetail(BuildContext context) async {
+    if (_isLoading) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BarberDetailScreen(barber: widget.barber),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _isLoading ? null : () => _navigateToDetail(context),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-            child: Row(
+          ],
+        ),
+        child: Stack(
+          children: [
+            Row(
               children: [
                 ClipRRect(
                   borderRadius: const BorderRadius.only(
@@ -200,9 +393,34 @@ class _HomePageState extends ConsumerState<HomePage> {
                     bottomLeft: Radius.circular(12),
                   ),
                   child: Image.network(
-                    barber.imageUrl ?? '',
+                    widget.barber.imageUrl ?? '',
+                    width: 100,
+                    height: 120,
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) {
-                      return Image.asset('assets/images/nearbarber2.png');
+                      return Image.asset(
+                        'assets/images/nearbarber2.png',
+                        width: 100,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      );
+                    },
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return Container(
+                        width: 100,
+                        height: 120,
+                        color: Colors.grey.shade200,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            value: loadingProgress.expectedTotalBytes != null
+                                ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                : null,
+                            strokeWidth: 2,
+                          ),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -210,36 +428,42 @@ class _HomePageState extends ConsumerState<HomePage> {
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 8,
+                      vertical: 12,
                       horizontal: 4,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          barber.name,
+                          widget.barber.name,
                           style: const TextStyle(
-                            fontSize: 14,
+                            fontSize: 16,
                             fontWeight: FontWeight.w600,
                             color: Color(0xff1C1C1C),
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 6),
-                        if (barber.location != null)
+                        const SizedBox(height: 8),
+                        if (widget.barber.location != null)
                           Row(
                             children: [
                               const Icon(
-                                Icons.location_on,
+                                LucideIcons.mapPin,
                                 color: Color(0xff363062),
-                                size: 16,
+                                size: 14,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                // ignore: prefer_interpolation_to_compose_strings
-                                barber.location! + ' • ' + barber.distance!,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Color(0xff6B7280),
+                              Expanded(
+                                child: Text(
+                                  '${widget.barber.location} • ${widget.barber.distance ?? 'N/A'}',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xff6B7280),
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -254,10 +478,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              barber.rating.toString(),
+                              widget.barber.rating?.toString() ?? 'N/A',
                               style: const TextStyle(
                                 fontSize: 12,
-                                color: Color(0xff6B7280),
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xff1C1C1C),
                               ),
                             ),
                           ],
@@ -266,11 +491,22 @@ class _HomePageState extends ConsumerState<HomePage> {
                     ),
                   ),
                 ),
+                const SizedBox(width: 8),
               ],
             ),
-          ),
-        );
-      }),
+            if (_isLoading)
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.7),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }
