@@ -59,8 +59,10 @@ class ChatRoom {
   final String? lastMessage;
   final DateTime? lastMessageTime;
   final int unreadCount;
+  final String? barberPhone;
 
   ChatRoom({
+    required this.barberPhone,
     required this.id,
     required this.barberId,
     required this.clientId,
@@ -73,6 +75,7 @@ class ChatRoom {
 
   factory ChatRoom.fromMap(Map<String, dynamic> map, String id) {
     return ChatRoom(
+      barberPhone: map['barberPhone'],
       id: id,
       barberId: map['barberId'] ?? '',
       clientId: map['clientId'] ?? '',

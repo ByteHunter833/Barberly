@@ -88,9 +88,7 @@ class ApiService {
 
       return jsonDecode(response.body);
     } else {
-      throw Exception(
-        'Ошибка ${response.statusCode}: ${response.reasonPhrase}',
-      );
+      throw Exception('Ошибка ${response.statusCode}: ${response.body}');
     }
   }
 }

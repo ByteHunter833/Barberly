@@ -1,6 +1,7 @@
 import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
-import 'package:barberly/features/chat/providers/chat_provider.dart';
+import 'package:barberly/features/chat/repositories/chat_repository.dart';
 import 'package:barberly/features/chat/screens/message_screen.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -20,6 +21,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
   final List<String> tabs = ['Active Chat', 'Finished'];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  final ChatRepository _chatRepo = ChatRepository();
 
   User? get user {
     final authState = ref.watch(authStateProvider);
@@ -91,6 +93,7 @@ class _ChatScreenState extends ConsumerState<ChatScreen>
             currentUser,
             _searchController,
             _searchQuery,
+            _chatRepo,
           ),
         ],
       ),
@@ -138,7 +141,26 @@ Widget _chatList(
   User? user,
   TextEditingController searchController,
   String searchQuery,
+  ChatRepository chatRepo,
 ) {
+  if (user == null) {
+    return Expanded(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.login, size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'Please sign in to view chats',
+              style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   return Expanded(
     child: TabBarView(
       controller: tabController,
@@ -176,67 +198,15 @@ Widget _chatList(
             ),
             const SizedBox(height: 12),
             Expanded(
-              child: Consumer(
-                builder: (context, ref, _) {
-                  final barbersAsync = ref.watch(chatControllerProvider);
+              child: StreamBuilder<QuerySnapshot>(
+                stream: chatRepo.getChatRoomsByClient(user.uid),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
 
-                  return barbersAsync.when(
-                    data: (barbers) {
-                      // Фильтрация барберов по поисковому запросу
-                      final filteredBarbers = searchQuery.isEmpty
-                          ? barbers
-                          : barbers.where((barber) {
-                              final name =
-                                  (barber['name'] as String?)?.toLowerCase() ??
-                                  '';
-                              final bio =
-                                  (barber['bio'] as String?)?.toLowerCase() ??
-                                  '';
-                              return name.contains(searchQuery) ||
-                                  bio.contains(searchQuery);
-                            }).toList();
-
-                      if (filteredBarbers.isEmpty) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.search_off,
-                                size: 64,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                searchQuery.isEmpty
-                                    ? 'No chats available'
-                                    : 'No results found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }
-
-                      return ListView.builder(
-                        itemCount: filteredBarbers.length,
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                        itemBuilder: (context, index) {
-                          final barber = filteredBarbers[index];
-                          return _ChatListTile(
-                            barber: barber,
-                            user: user,
-                            ref: ref,
-                          );
-                        },
-                      );
-                    },
-                    loading: () =>
-                        const Center(child: CircularProgressIndicator()),
-                    error: (err, _) => Center(
+                  if (snapshot.hasError) {
+                    return Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -255,7 +225,7 @@ Widget _chatList(
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            err.toString(),
+                            snapshot.error.toString(),
                             style: TextStyle(
                               fontSize: 12,
                               color: Colors.grey.shade500,
@@ -264,7 +234,94 @@ Widget _chatList(
                           ),
                         ],
                       ),
-                    ),
+                    );
+                  }
+
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    print(snapshot.data!.docs);
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.chat_bubble_outline,
+                            size: 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No chats yet',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start chatting with barbers',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  final chatRooms = snapshot.data!.docs;
+
+                  // Фильтрация чатов по поисковому запросу
+                  final filteredRooms = searchQuery.isEmpty
+                      ? chatRooms
+                      : chatRooms.where((doc) {
+                          final data = doc.data() as Map<String, dynamic>;
+                          final clientName =
+                              (data['clientName'] as String?)?.toLowerCase() ??
+                              '';
+                          final lastMessage =
+                              (data['lastMessage'] as String?)?.toLowerCase() ??
+                              '';
+                          return clientName.contains(searchQuery) ||
+                              lastMessage.contains(searchQuery);
+                        }).toList();
+
+                  if (filteredRooms.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 64,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No results found',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredRooms.length,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    itemBuilder: (context, index) {
+                      final chatRoom = filteredRooms[index];
+                      final data = chatRoom.data() as Map<String, dynamic>;
+                      print(data);
+                      return _ChatRoomTile(
+                        chatRoomId: chatRoom.id,
+                        chatRoomData: data,
+                        currentUserId: user.uid,
+                      );
+                    },
                   );
                 },
               ),
@@ -276,63 +333,68 @@ Widget _chatList(
   );
 }
 
-class _ChatListTile extends StatefulWidget {
-  final Map<String, dynamic> barber;
-  final User? user;
-  final WidgetRef ref;
+class _ChatRoomTile extends StatefulWidget {
+  final String chatRoomId;
+  final Map<String, dynamic> chatRoomData;
+  final String currentUserId;
 
-  const _ChatListTile({
-    required this.barber,
-    required this.user,
-    required this.ref,
+  const _ChatRoomTile({
+    required this.chatRoomId,
+    required this.chatRoomData,
+    required this.currentUserId,
   });
 
   @override
-  State<_ChatListTile> createState() => _ChatListTileState();
+  State<_ChatRoomTile> createState() => _ChatRoomTileState();
 }
 
-class _ChatListTileState extends State<_ChatListTile> {
+class _ChatRoomTileState extends State<_ChatRoomTile> {
   bool _isLoading = false;
+  Map<String, dynamic>? _barberData;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBarberData();
+  }
+
+  Future<void> _loadBarberData() async {
+    try {
+      final barberId = widget.chatRoomData['barberId'];
+      if (barberId == null) return;
+
+      final snapshot = await FirebaseFirestore.instance
+          .collection('barbers')
+          .doc(barberId)
+          .get();
+
+      if (snapshot.exists) {
+        setState(() {
+          _barberData = snapshot.data();
+        });
+      }
+    } catch (e) {
+      // Handle error silently
+    }
+  }
 
   Future<void> _openChat() async {
-    if (widget.user == null || _isLoading) return;
+    if (_isLoading) return;
 
     setState(() {
       _isLoading = true;
     });
 
     try {
-      final bookingId = 'booking001';
-      final chatRoomId = await widget.ref
-          .read(chatControllerProvider.notifier)
-          .createChatRoom(
-            barberId: widget.barber['uid'],
-            clientName: widget.user!.displayName,
-            clientImageUrl: widget.user!.photoURL,
-            clientId: widget.user!.uid,
-            bookingId: bookingId,
-          );
-
-      if (mounted) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => MessagesScreen(
-              chatRoomId: chatRoomId,
-              barberId: widget.barber['uid'],
-            ),
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => MessagesScreen(
+            chatRoomId: widget.chatRoomId,
+            barberId: widget.chatRoomData['barberId'],
           ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to open chat: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -342,20 +404,53 @@ class _ChatListTileState extends State<_ChatListTile> {
     }
   }
 
+  String _formatTimestamp(dynamic timestamp) {
+    if (timestamp == null) return '';
+
+    try {
+      DateTime dateTime;
+      if (timestamp is String) {
+        dateTime = DateTime.parse(timestamp);
+      } else if (timestamp is Timestamp) {
+        dateTime = timestamp.toDate();
+      } else {
+        return '';
+      }
+
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inDays == 0) {
+        return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      } else if (difference.inDays == 1) {
+        return 'Yesterday';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays} days ago';
+      } else {
+        return '${dateTime.day}/${dateTime.month}/${dateTime.year}';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final barberName = _barberData?['name'] ?? 'Loading...';
+    final barberImageUrl =
+        _barberData?['imageUrl'] ?? 'https://i.postimg.cc/cCsYDjvj/user-2.png';
+    final lastMessage = widget.chatRoomData['lastMessage'] ?? 'No messages yet';
+    final lastMessageTime = widget.chatRoomData['lastMessageTime'];
+    final unreadCount = widget.chatRoomData['unreadCount'] ?? 0;
+    final isOnline = _barberData?['online'] ?? false;
+
     return ListTile(
       onTap: _isLoading ? null : _openChat,
       enabled: !_isLoading,
       leading: Stack(
         children: [
-          CircleAvatar(
-            backgroundImage: NetworkImage(
-              widget.barber['imageUrl'] ??
-                  'https://i.postimg.cc/cCsYDjvj/user-2.png',
-            ),
-          ),
-          if (widget.barber['online'] ?? false)
+          CircleAvatar(backgroundImage: NetworkImage(barberImageUrl)),
+          if (isOnline)
             Positioned(
               bottom: 0,
               right: 0,
@@ -375,22 +470,66 @@ class _ChatListTileState extends State<_ChatListTile> {
         children: [
           Expanded(
             child: Text(
-              widget.barber['name'] ?? 'Unknown',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              barberName,
+              style: TextStyle(
+                fontWeight: unreadCount > 0 ? FontWeight.bold : FontWeight.w600,
+              ),
             ),
           ),
-          if (_isLoading)
+          if (lastMessageTime != null)
+            Text(
+              _formatTimestamp(lastMessageTime),
+              style: TextStyle(
+                fontSize: 12,
+                color: unreadCount > 0 ? const Color(0xff363062) : Colors.grey,
+                fontWeight: unreadCount > 0
+                    ? FontWeight.w600
+                    : FontWeight.normal,
+              ),
+            ),
+          if (_isLoading) ...[
+            const SizedBox(width: 8),
             const SizedBox(
               width: 16,
               height: 16,
               child: CircularProgressIndicator(strokeWidth: 2),
             ),
+          ],
         ],
       ),
-      subtitle: Text(
-        widget.barber['bio'] ?? '',
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      subtitle: Row(
+        children: [
+          Expanded(
+            child: Text(
+              lastMessage,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontWeight: unreadCount > 0
+                    ? FontWeight.w500
+                    : FontWeight.normal,
+                color: unreadCount > 0 ? Colors.black87 : Colors.grey[600],
+              ),
+            ),
+          ),
+          if (unreadCount > 0)
+            Container(
+              margin: const EdgeInsets.only(left: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xff363062),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                unreadCount.toString(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -27,19 +27,30 @@ class FirebaseAuthService {
       email: email,
       password: password,
     );
-    final user = credential.user;
-    if (user != null) {
-      await user.updateDisplayName(name);
 
+    final user = credential.user;
+
+    if (user != null) {
+      // Обновляем displayName
+      await user.updateDisplayName(name);
+      await Future.delayed(const Duration(milliseconds: 500));
+      // ВАЖНО: Перезагружаем пользователя, чтобы получить обновленные данные
       await user.reload();
+
+      // Получаем обновленного пользователя
+      final updatedUser = _auth.currentUser;
+
+      print('Updated user displayName: ${updatedUser?.displayName}');
+
+      // Сохраняем в Firestore
+      await _firestore.collection('users').doc(user.uid).set({
+        'name': name,
+        'email': email,
+        'role': 'user',
+        'avatarUrl': 'https://i.pravatar.cc/150?img=7',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
     }
-    await _firestore.collection('users').doc(credential.user!.uid).set({
-      'name': name,
-      'email': email,
-      'role': 'user', // пока user
-      'avatarUrl': 'https://i.pravatar.cc/150?img=7',
-      'createdAt': FieldValue.serverTimestamp(),
-    });
 
     return credential;
   }

@@ -9,8 +9,10 @@ class Barber {
   final String? phone;
   final String? email;
   final dynamic services;
+  final String? firebaseuid;
 
   Barber({
+    required this.firebaseuid,
     required this.id,
     required this.phone,
     required this.email,
@@ -25,6 +27,7 @@ class Barber {
 
   factory Barber.fromJson(Map<String, dynamic> json) {
     return Barber(
+      firebaseuid: json['firebaseuid'] ?? '',
       phone: json['phone'] ?? '',
       email: json['email'] ?? '',
       id: json['id'] ?? '',

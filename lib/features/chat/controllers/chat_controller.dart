@@ -23,12 +23,14 @@ class ChatController
     required String barberId,
     required String clientId,
     required String bookingId,
+    required String? barberPhone,
   }) async {
     return await _repository.createChatRoom(
       barberId: barberId,
       clientId: clientId,
       bookingId: bookingId,
       clientName: clientName,
+      barberPhone: barberPhone,
       clientImageUrl: clientImageUrl,
     );
   }

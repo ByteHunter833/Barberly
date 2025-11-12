@@ -1,25 +1,30 @@
 // ignore_for_file: library_private_types_in_public_api, deprecated_member_use
 
+import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
 import 'package:barberly/core/models/barber.dart';
 import 'package:barberly/features/booking/screens/booking_appointment.dart';
+import 'package:barberly/features/chat/providers/chat_provider.dart';
+import 'package:barberly/features/chat/screens/message_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-class BarberDetailScreen extends StatefulWidget {
+class BarberDetailScreen extends ConsumerStatefulWidget {
   final Barber barber;
   const BarberDetailScreen({super.key, required this.barber});
 
   @override
-  _BarberDetailScreenState createState() => _BarberDetailScreenState();
+  ConsumerState<BarberDetailScreen> createState() => _BarberDetailScreenState();
 }
 
-class _BarberDetailScreenState extends State<BarberDetailScreen>
+class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   late Animation<double> _animation;
   bool isFavorite = false;
   int selectedTabIndex = 0;
   bool _isBookingLoading = false;
+  bool _isChatLoading = false;
 
   @override
   void initState() {
@@ -67,6 +72,68 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
     }
   }
 
+  Future<void> _openChat() async {
+    if (_isChatLoading) return;
+
+    final user = ref.read(authStateProvider).value;
+    if (user == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please sign in to chat'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    setState(() {
+      _isChatLoading = true;
+    });
+
+    try {
+      final bookingId = 'booking001';
+      final chatRoomId = await ref
+          .read(chatControllerProvider.notifier)
+          .createChatRoom(
+            barberPhone: widget.barber.phone,
+            barberId: widget.barber.id,
+            clientName: user.displayName,
+            clientImageUrl: user.photoURL,
+            clientId: user.uid,
+            bookingId: bookingId,
+          );
+
+      if (mounted) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MessagesScreen(
+              chatRoomId: chatRoomId,
+              barberId: widget.barber.id,
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to open chat: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isChatLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +152,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                   ),
                   image: DecorationImage(
                     image: AssetImage('assets/images/recommended.png'),
-
                     fit: BoxFit.cover,
                   ),
                 ),
@@ -214,28 +280,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                           ),
                         ],
                       ),
-                      const SizedBox(height: 6),
-
-                      // Contact Info
-                      if (widget.barber.phone != null &&
-                          widget.barber.phone!.isNotEmpty)
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.phone,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.barber.phone!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
                       const SizedBox(height: 20),
 
                       // Action Buttons
@@ -250,33 +294,46 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
                             ),
                             label: 'Maps',
                             color: const Color(0xFF2C3E7C),
+                            onTap: () {
+                              // TODO: Open maps
+                            },
                           ),
                           _buildActionButton(
-                            icon: SvgPicture.asset('assets/icons/chat.svg'),
+                            icon: _isChatLoading
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Color(0xFF2C3E7C),
+                                      ),
+                                    ),
+                                  )
+                                : SvgPicture.asset('assets/icons/chat.svg'),
                             label: 'Chat',
                             color: const Color(0xFF2C3E7C),
+                            onTap: _isChatLoading ? null : _openChat,
                           ),
                           _buildActionButton(
                             icon: const Icon(Icons.share_outlined),
                             label: 'Share',
                             color: Colors.grey[700]!,
+                            onTap: () {
+                              // TODO: Share functionality
+                            },
                           ),
-                          GestureDetector(
+                          _buildActionButton(
+                            icon: isFavorite
+                                ? const Icon(Icons.favorite, color: Colors.pink)
+                                : const Icon(Icons.favorite_border),
+                            label: 'Favorite',
+                            color: Colors.pink,
                             onTap: () {
                               setState(() {
                                 isFavorite = !isFavorite;
                               });
                             },
-                            child: _buildActionButton(
-                              icon: isFavorite
-                                  ? const Icon(
-                                      Icons.favorite,
-                                      color: Colors.grey,
-                                    )
-                                  : const Icon(Icons.favorite_border),
-                              label: 'Favorite',
-                              color: Colors.pink,
-                            ),
                           ),
                         ],
                       ),
@@ -391,7 +448,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
     return Expanded(
       child: GestureDetector(
         onTap: () {
-          // Immediate color change on tap
           setState(() {
             selectedTabIndex = index;
           });
@@ -435,27 +491,31 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
     required Widget icon,
     required String label,
     required Color color,
+    VoidCallback? onTap,
   }) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              shape: BoxShape.circle,
+            ),
+            child: icon,
           ),
-          child: icon,
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[700],
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -465,7 +525,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Bio Section
           if (widget.barber.bio != null && widget.barber.bio!.isNotEmpty)
             RichText(
               text: TextSpan(
@@ -505,8 +564,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
               ),
             ),
           const SizedBox(height: 24),
-
-          // Opening Hours
           const Text(
             'Opening Hours',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -516,8 +573,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
           const SizedBox(height: 10),
           _buildHoursRow('Saturday - Sunday', '09.00 am - 09.00 pm'),
           const SizedBox(height: 24),
-
-          // Contact Information
           const Text(
             'Contact Information',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -555,7 +610,6 @@ class _BarberDetailScreenState extends State<BarberDetailScreen>
   }
 
   Widget _buildServiceTab() {
-    debugPrint(widget.barber.services.toString());
     final services = widget.barber.services ?? [];
 
     if (services.isEmpty) {

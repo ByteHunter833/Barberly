@@ -15,6 +15,14 @@ class ChatRepository {
     });
   }
 
+  Stream<QuerySnapshot> getChatRoomsByClient(String clientId) {
+    return _firestore
+        .collection('chatrooms')
+        .where('clientId', isEqualTo: clientId)
+        .orderBy('lastMessageTime', descending: true)
+        .snapshots();
+  }
+
   // Создаем chatroom
   Future<String> createChatRoom({
     required String barberId,
@@ -22,6 +30,7 @@ class ChatRepository {
     required String bookingId,
     required String? clientImageUrl,
     required String? clientName,
+    required String? barberPhone,
   }) async {
     final query = await _firestore
         .collection('chatrooms')
@@ -36,6 +45,7 @@ class ChatRepository {
       'barberId': barberId,
       'clientId': clientId,
       'bookingId': bookingId,
+      'barber_phone': barberPhone,
       'clientName': clientName,
       'clientImageUrl': clientImageUrl,
       'createdAt': DateTime.now().toIso8601String(),

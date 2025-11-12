@@ -39,7 +39,6 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
     _messagesStream = _chatRepo.getMessages(widget.chatRoomId);
     _loadBarberProfile();
 
-    // Автоскролл при появлении новых сообщений
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
     });
@@ -53,15 +52,19 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
   }
 
   Future<void> _loadBarberProfile() async {
-    final snapshot = await FirebaseFirestore.instance
-        .collection('barbers')
-        .doc(widget.barberId)
-        .get();
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('barbers')
+          .doc(widget.barberId)
+          .get();
 
-    if (snapshot.exists && mounted) {
-      setState(() {
-        barberData = snapshot.data();
-      });
+      if (query.exists) {
+        setState(() {
+          barberData = query.data();
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load barber data: $e');
     }
   }
 
@@ -81,6 +84,7 @@ class _MessagesScreenState extends ConsumerState<MessagesScreen> {
 
   Future<void> _sendMessage() async {
     final text = _controller.text.trim();
+    print(widget.barberId);
     if (text.isEmpty || user == null || _isLoading) return;
 
     // Сохраняем текст и сразу очищаем поле
