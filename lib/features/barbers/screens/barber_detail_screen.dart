@@ -61,7 +61,9 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     try {
       await Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const BookingAppointment()),
+        MaterialPageRoute(
+          builder: (context) => BookingAppointment(barber: widget.barber),
+        ),
       );
     } finally {
       if (mounted) {

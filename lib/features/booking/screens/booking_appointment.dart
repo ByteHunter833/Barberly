@@ -1,12 +1,14 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:barberly/core/models/barber.dart';
 import 'package:barberly/core/storage/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class BookingAppointment extends StatefulWidget {
-  const BookingAppointment({super.key});
+  final Barber? barber;
+  const BookingAppointment({super.key, this.barber});
 
   @override
   State<BookingAppointment> createState() => _BookingAppointmentState();
@@ -87,23 +89,24 @@ class _BookingAppointmentState extends State<BookingAppointment> {
 
   // ======= Services =======
   Widget _services() {
-    final List<Map<String, String>> services = [
-      {
-        'imagePath': 'assets/images/basic_haircut.png',
-        'label': 'Basic haircut',
-        'price': '\$20',
-      },
-      {
-        'imagePath': 'assets/images/kids_haircut.png',
-        'label': 'Kids haircut',
-        'price': '\$15',
-      },
-      {
-        'imagePath': 'assets/images/hair_coloring.png',
-        'label': 'Hair coloring',
-        'price': '\$30',
-      },
-    ];
+    // final List<Map<String, String>> services = [
+    //   {
+    //     'imagePath': 'assets/images/basic_haircut.png',
+    //     'label': 'Basic haircut',
+    //     'price': '\$20',
+    //   },
+    //   {
+    //     'imagePath': 'assets/images/kids_haircut.png',
+    //     'label': 'Kids haircut',
+    //     'price': '\$15',
+    //   },
+    //   {
+    //     'imagePath': 'assets/images/hair_coloring.png',
+    //     'label': 'Hair coloring',
+    //     'price': '\$30',
+    //   },
+    // ];
+    final services = widget.barber!.services ?? [];
 
     return SizedBox(
       height: 130,
@@ -127,9 +130,11 @@ class _BookingAppointmentState extends State<BookingAppointment> {
                 Stack(
                   alignment: Alignment.center,
                   children: [
-                    CircleAvatar(
+                    const CircleAvatar(
                       radius: 35,
-                      backgroundImage: AssetImage(service['imagePath']!),
+                      backgroundImage: AssetImage(
+                        'assets/images/recommended1.png',
+                      ),
                     ),
                     if (isSelected)
                       Container(
@@ -149,7 +154,7 @@ class _BookingAppointmentState extends State<BookingAppointment> {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  service['label']!,
+                  service['name']!,
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -157,7 +162,7 @@ class _BookingAppointmentState extends State<BookingAppointment> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  service['price']!,
+                  '\$${service['price']}',
                   style: const TextStyle(fontSize: 13, color: Colors.black54),
                 ),
               ],
