@@ -22,7 +22,10 @@ class BookingSuccessScreen extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            child: Image.asset('assets/images/profile_surface.png'),
+            child: Image.asset(
+              'assets/images/profile_surface.png',
+              fit: BoxFit.cover,
+            ),
           ),
 
           Positioned(

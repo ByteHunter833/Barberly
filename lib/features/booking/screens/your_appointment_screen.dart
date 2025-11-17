@@ -1,11 +1,15 @@
 // ignore_for_file: deprecated_member_use
 
+import 'package:barberly/core/network/api_service.dart';
+import 'package:barberly/features/booking/repositories/booking_repository.dart';
+import 'package:barberly/features/booking/screens/booking_succes_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:barberly/features/booking/screens/booking_succes_screen.dart';
 
 class YourAppointmentScreen extends StatefulWidget {
-  const YourAppointmentScreen({super.key});
+  final Map<String, dynamic>? bookingData;
+
+  const YourAppointmentScreen({super.key, this.bookingData});
 
   @override
   State<YourAppointmentScreen> createState() => _YourAppointmentScreenState();
@@ -14,6 +18,7 @@ class YourAppointmentScreen extends StatefulWidget {
 class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
   final TextEditingController _couponController = TextEditingController();
   bool isCouponApplied = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -23,6 +28,19 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final barber = widget.bookingData?['barber'];
+    final services = widget.bookingData?['services'] as List<dynamic>? ?? [];
+    final date = widget.bookingData?['date'] ?? '';
+    final time = widget.bookingData?['time'] ?? '';
+
+    double totalPrice = 0;
+    for (var service in services) {
+      totalPrice += double.tryParse(service['price']?.toString() ?? '0') ?? 0;
+    }
+
+    double discount = isCouponApplied ? totalPrice * 0.1 : 0;
+    double finalPrice = totalPrice - discount;
+
     return Scaffold(
       backgroundColor: const Color(0xff363062),
       appBar: AppBar(
@@ -57,51 +75,70 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
                       width: 70,
                       height: 70,
                       color: Colors.grey.shade300,
-                      child: Image.asset(
-                        'assets/images/recommended1.png',
-                        fit: BoxFit.cover,
-                      ),
+                      child: barber?.imageUrl != null
+                          ? Image.network(
+                              barber.imageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Image.asset(
+                                'assets/images/recommended1.png',
+                                fit: BoxFit.cover,
+                              ),
+                            )
+                          : Image.asset(
+                              'assets/images/recommended1.png',
+                              fit: BoxFit.cover,
+                            ),
                     ),
                   ),
                   const SizedBox(width: 12),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Master piece Barbershop...',
-                          style: TextStyle(
+                          barber?.name ?? 'Barber',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.location_on,
                               color: Colors.white70,
                               size: 16,
                             ),
-                            SizedBox(width: 4),
-                            Text(
-                              'Jogja Expo Centre (2 km)',
-                              style: TextStyle(
-                                color: Colors.white70,
-                                fontSize: 13,
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                barber?.location ?? 'Location not available',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 6),
+                        const SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.star, color: Colors.amber, size: 16),
-                            SizedBox(width: 4),
+                            const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 4),
                             Text(
-                              '5.0  (24)',
-                              style: TextStyle(
+                              barber?.rating?.toString() ?? '0.0',
+                              style: const TextStyle(
                                 color: Colors.white70,
                                 fontSize: 13,
                               ),
@@ -151,9 +188,9 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Sun, 15 Jan - 08:00 AM',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                    Text(
+                      '$date - $time',
+                      style: const TextStyle(fontSize: 14, color: Colors.grey),
                     ),
 
                     const SizedBox(height: 24),
@@ -174,19 +211,22 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
 
                     const SizedBox(height: 16),
 
-                    _buildServiceItem(
-                      image: 'assets/images/basic_haircut.png',
-                      title: 'Basic haircut',
-                      subtitle: 'Basic haircut & vitamin',
-                      price: '\$20',
-                    ),
-                    const SizedBox(height: 16),
-                    _buildServiceItem(
-                      image: 'assets/images/recommended1.png',
-                      title: 'Massage',
-                      subtitle: 'Extra massage',
-                      price: '\$10',
-                    ),
+                    ...services.asMap().entries.map((entry) {
+                      final service = entry.value;
+                      final isLast = entry.key == services.length - 1;
+                      return Column(
+                        children: [
+                          _buildServiceItem(
+                            image: 'assets/images/basic_haircut.png',
+                            title: service['name'] ?? 'Service',
+                            subtitle: service['description'] ?? 'Service',
+                            price: '\$${service['price']}',
+                          ),
+                          if (!isLast) const SizedBox(height: 16),
+                        ],
+                      );
+                    }),
+
                     const SizedBox(height: 24),
 
                     const Text(
@@ -254,22 +294,36 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
                     ),
                     const SizedBox(height: 16),
 
-                    _buildSummaryRow('Basic haircut', '\$20'),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow('Extra massage', '\$10'),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow(
-                      'Coupon discount',
-                      '- \$5',
-                      valueColor: Colors.green,
-                    ),
+                    ...services.asMap().entries.map((entry) {
+                      final service = entry.value;
+                      return Column(
+                        children: [
+                          _buildSummaryRow(
+                            service['name'] ?? 'Service',
+                            '\$${service['price']}',
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+                      );
+                    }),
+
+                    if (isCouponApplied)
+                      _buildSummaryRow(
+                        'Coupon discount (10%)',
+                        '- \$${discount.toStringAsFixed(2)}',
+                        valueColor: Colors.green,
+                      ),
 
                     const SizedBox(height: 16),
                     const Divider(),
 
                     const SizedBox(height: 16),
 
-                    _buildSummaryRow('Total price', '\$25', isTotal: true),
+                    _buildSummaryRow(
+                      'Total price',
+                      '\$${finalPrice.toStringAsFixed(2)}',
+                      isTotal: true,
+                    ),
 
                     const SizedBox(height: 32),
 
@@ -277,36 +331,37 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  const BookingSuccessScreen(),
-                            ),
-                          );
-                        },
+                        onPressed: _isLoading ? null : _handlePayNow,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF3D3080),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Pay now',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Text(
+                                    'Pay now',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  SvgPicture.asset('assets/icons/wallet.svg'),
+                                ],
                               ),
-                            ),
-                            const SizedBox(width: 10),
-                            SvgPicture.asset('assets/icons/wallet.svg'),
-                          ],
-                        ),
                       ),
                     ),
 
@@ -319,6 +374,74 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _handlePayNow() async {
+    if (widget.bookingData == null) return;
+
+    final barberId = widget.bookingData?['barberId']?.toString();
+    final tenantId = widget.bookingData?['tenantId'];
+    final serviceIds = widget.bookingData?['serviceIds'] as List<dynamic>?;
+    final dateTime = widget.bookingData?['dateTime']?.toString();
+
+    if (barberId == null ||
+        tenantId == null ||
+        serviceIds == null ||
+        dateTime == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Missing booking information')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final api = ApiService();
+      await api.loadToken();
+      final repository = BookingRepository(api);
+
+      final result = await repository.createOrder(
+        barberId: barberId,
+        tenantId: tenantId,
+        serviceIds: serviceIds.map((e) => e.toString()).toList(),
+        dateTime: dateTime,
+      );
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (result['success'] == true) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const BookingSuccessScreen(),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(result['message'] ?? 'Failed to create order')),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 
   Widget _buildServiceItem({

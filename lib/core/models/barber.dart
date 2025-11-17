@@ -1,4 +1,5 @@
 class Barber {
+  final dynamic tenantId;
   final String id;
   final String name;
   final String imageUrl;
@@ -23,6 +24,7 @@ class Barber {
     this.distance,
     this.bio,
     this.services,
+    this.tenantId,
   });
 
   factory Barber.fromJson(Map<String, dynamic> json) {
@@ -40,6 +42,7 @@ class Barber {
       distance: json['distance'] ?? '2 km',
       bio: json['bio'] ?? 'Experienced barber specializing in modern styles.',
       services: json['services'] ?? [],
+      tenantId: json['tenant_id'] ?? 8,
     );
   }
 }

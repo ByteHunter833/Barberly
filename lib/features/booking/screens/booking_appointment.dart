@@ -1,7 +1,7 @@
 // ignore_for_file: deprecated_member_use
 
 import 'package:barberly/core/models/barber.dart';
-import 'package:barberly/core/storage/localstorage_service.dart';
+import 'package:barberly/features/booking/screens/your_appointment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
@@ -15,7 +15,7 @@ class BookingAppointment extends StatefulWidget {
 }
 
 class _BookingAppointmentState extends State<BookingAppointment> {
-  int? selectedServiceIndex;
+  List<int> selectedServiceIndices = [];
   int? selectedTimeIndex;
   DateTime? selectedDate;
   String? selectedTime;
@@ -116,12 +116,16 @@ class _BookingAppointmentState extends State<BookingAppointment> {
         separatorBuilder: (_, __) => const SizedBox(width: 18),
         itemBuilder: (context, index) {
           final service = services[index];
-          final bool isSelected = selectedServiceIndex == index;
+          final bool isSelected = selectedServiceIndices.contains(index);
 
           return GestureDetector(
             onTap: () {
               setState(() {
-                selectedServiceIndex = index;
+                if (selectedServiceIndices.contains(index)) {
+                  selectedServiceIndices.remove(index);
+                } else {
+                  selectedServiceIndices.add(index);
+                }
               });
             },
             child: Column(
@@ -246,17 +250,18 @@ class _BookingAppointmentState extends State<BookingAppointment> {
 
   // ======= Payment summary =======
   Widget _paymentSummary() {
-    final selectedServicePrice = selectedServiceIndex == null
-        ? '\$0'
-        : ['\$20', '\$15', '\$30'][selectedServiceIndex!];
+    final services = widget.barber?.services ?? [];
+    double totalPrice = 0;
+    List<String> selectedServiceNames = [];
 
-    final selectedServiceLabel = selectedServiceIndex == null
-        ? 'No service'
-        : [
-            'Basic haircut',
-            'Kids haircut',
-            'Hair coloring',
-          ][selectedServiceIndex!];
+    for (int index in selectedServiceIndices) {
+      if (index < services.length) {
+        final service = services[index];
+        final price = double.tryParse(service['price']?.toString() ?? '0') ?? 0;
+        totalPrice += price;
+        selectedServiceNames.add(service['name'] ?? 'Service');
+      }
+    }
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -266,7 +271,31 @@ class _BookingAppointmentState extends State<BookingAppointment> {
       ),
       child: Column(
         children: [
-          _summaryRow(selectedServiceLabel, selectedServicePrice),
+          if (selectedServiceIndices.isEmpty)
+            _summaryRow('No service selected', '\$0'),
+          ...selectedServiceIndices.asMap().entries.map((entry) {
+            final index = entry.value;
+            if (index < services.length) {
+              final service = services[index];
+              final price = service['price']?.toString() ?? '0';
+              final name = service['name'] ?? 'Service';
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _summaryRow(name, '\$$price'),
+              );
+            }
+            return const SizedBox.shrink();
+          }),
+          if (selectedServiceIndices.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            const Divider(height: 1),
+            const SizedBox(height: 12),
+            _summaryRow(
+              'Total',
+              '\$${totalPrice.toStringAsFixed(2)}',
+              isBold: true,
+            ),
+          ],
           const SizedBox(height: 12),
           if (selectedTime != null && selectedDate != null)
             _summaryRow(
@@ -324,11 +353,65 @@ class _BookingAppointmentState extends State<BookingAppointment> {
       height: 56,
       child: ElevatedButton(
         onPressed: () async {
-          final token = await LocalStorage.getToken();
-          final dateTime = combinedDateTime?.toUtc().toIso8601String();
-          print('Token: $token');
-          print('Booking datetime: $dateTime');
-          print('Selected service index: $selectedServiceIndex');
+          if (selectedServiceIndices.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Please select at least one service'),
+              ),
+            );
+            return;
+          }
+          if (selectedDate == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please select a date')),
+            );
+            return;
+          }
+          if (selectedTime == null) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Please select a time')),
+            );
+            return;
+          }
+
+          final services = widget.barber?.services ?? [];
+          final List<String> selectedServiceIds = [];
+          final List<Map<String, dynamic>> selectedServices = [];
+
+          for (int index in selectedServiceIndices) {
+            if (index < services.length) {
+              final service = services[index];
+              final serviceId = service['id']?.toString();
+              if (serviceId != null) {
+                selectedServiceIds.add(serviceId);
+                selectedServices.add({
+                  'id': serviceId,
+                  'name': service['name'],
+                  'price': service['price'],
+                  'description': service['description'],
+                });
+              }
+            }
+          }
+
+          final bookingData = {
+            'barber': widget.barber,
+            'barberId': widget.barber?.id,
+            'tenantId': widget.barber?.tenantId,
+            'serviceIds': selectedServiceIds,
+            'services': selectedServices,
+            'dateTime': combinedDateTime?.toUtc().toIso8601String(),
+            'date': selectedDate?.toLocal().toString().split(' ')[0],
+            'time': selectedTime,
+          };
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) =>
+                  YourAppointmentScreen(bookingData: bookingData),
+            ),
+          );
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF3D3080),
