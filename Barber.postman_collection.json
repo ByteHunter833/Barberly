@@ -17,14 +17,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/me",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"me"
-							]
+							"path": ["api", "me"]
 						}
 					},
 					"response": []
@@ -46,14 +41,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/register",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"register"
-							]
+							"path": ["api", "register"]
 						}
 					},
 					"response": []
@@ -75,14 +65,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/forgot-password",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"forgot-password"
-							]
+							"path": ["api", "forgot-password"]
 						}
 					},
 					"response": []
@@ -104,14 +89,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/verify-reset-code",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"verify-reset-code"
-							]
+							"path": ["api", "verify-reset-code"]
 						}
 					},
 					"response": []
@@ -133,14 +113,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/reset-password",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"reset-password"
-							]
+							"path": ["api", "reset-password"]
 						}
 					},
 					"response": []
@@ -162,14 +137,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/resend",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"resend"
-							]
+							"path": ["api", "resend"]
 						}
 					},
 					"response": []
@@ -191,14 +161,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/verify",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"verify"
-							]
+							"path": ["api", "verify"]
 						}
 					},
 					"response": []
@@ -220,14 +185,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/login",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"login"
-							]
+							"path": ["api", "login"]
 						}
 					},
 					"response": []
@@ -250,14 +210,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/logout",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"logout"
-							]
+							"path": ["api", "logout"]
 						}
 					},
 					"response": []
@@ -275,14 +230,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/barber-all",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"barber-all"
-							]
+							"path": ["api", "barber-all"]
 						}
 					},
 					"response": []
@@ -300,14 +250,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services"
-							]
+							"path": ["api", "services"]
 						}
 					},
 					"response": []
@@ -320,15 +265,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/1",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"1"
-							]
+							"path": ["api", "services", "1"]
 						}
 					},
 					"response": []
@@ -357,14 +296,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services"
-							]
+							"path": ["api", "services"]
 						}
 					},
 					"response": []
@@ -386,15 +320,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/1",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"1"
-							]
+							"path": ["api", "services", "1"]
 						}
 					},
 					"response": []
@@ -411,15 +339,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/2",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"2"
-							]
+							"path": ["api", "services", "2"]
 						}
 					},
 					"response": []
@@ -437,16 +359,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/1/users",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"1",
-								"users"
-							]
+							"path": ["api", "services", "1", "users"]
 						}
 					},
 					"response": []
@@ -468,16 +383,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/1/users",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"1",
-								"users"
-							]
+							"path": ["api", "services", "1", "users"]
 						}
 					},
 					"response": []
@@ -490,17 +398,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/services/3/users/4",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"services",
-								"3",
-								"users",
-								"4"
-							]
+							"path": ["api", "services", "3", "users", "4"]
 						}
 					},
 					"response": []
@@ -518,14 +418,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders"
-							]
+							"path": ["api", "orders"]
 						}
 					},
 					"response": []
@@ -586,14 +481,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders"
-							]
+							"path": ["api", "orders"]
 						}
 					},
 					"response": []
@@ -615,16 +505,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders/1/done",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders",
-								"1",
-								"done"
-							]
+							"path": ["api", "orders", "1", "done"]
 						}
 					},
 					"response": []
@@ -646,16 +529,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders/3/cancel",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders",
-								"3",
-								"cancel"
-							]
+							"path": ["api", "orders", "3", "cancel"]
 						}
 					},
 					"response": []
@@ -682,16 +558,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders/1/status",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders",
-								"1",
-								"status"
-							]
+							"path": ["api", "orders", "1", "status"]
 						}
 					},
 					"response": []
@@ -704,15 +573,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/orders/3",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"orders",
-								"3"
-							]
+							"path": ["api", "orders", "3"]
 						}
 					},
 					"response": []
@@ -730,14 +593,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/notifications",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"notifications"
-							]
+							"path": ["api", "notifications"]
 						}
 					},
 					"response": []
@@ -759,14 +617,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/notifications",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"notifications"
-							]
+							"path": ["api", "notifications"]
 						}
 					},
 					"response": []
@@ -788,16 +641,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/notifications/1/status",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"notifications",
-								"1",
-								"status"
-							]
+							"path": ["api", "notifications", "1", "status"]
 						}
 					},
 					"response": []
@@ -810,15 +656,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/notifications/1",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"notifications",
-								"1"
-							]
+							"path": ["api", "notifications", "1"]
 						}
 					},
 					"response": []
@@ -836,14 +676,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/files?model=order&model_id=2",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"files"
-							],
+							"path": ["api", "files"],
 							"query": [
 								{
 									"key": "model",
@@ -886,14 +721,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/files",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"files"
-							]
+							"path": ["api", "files"]
 						}
 					},
 					"response": []
@@ -926,15 +756,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/files/1",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"files",
-								"1"
-							]
+							"path": ["api", "files", "1"]
 						}
 					},
 					"response": []
@@ -959,14 +783,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/employees",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"employees"
-							]
+							"path": ["api", "employees"]
 						}
 					},
 					"response": []
@@ -988,14 +807,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/employees",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"employees"
-							]
+							"path": ["api", "employees"]
 						}
 					},
 					"response": []
@@ -1015,15 +829,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/employees/8",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"employees",
-								"8"
-							]
+							"path": ["api", "employees", "8"]
 						}
 					},
 					"response": []
@@ -1036,15 +844,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/employees/8",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"employees",
-								"8"
-							]
+							"path": ["api", "employees", "8"]
 						}
 					},
 					"response": []
@@ -1062,15 +864,9 @@
 						"url": {
 							"raw": "http://localhost:8080/api/barbers/?minRating=1.0",
 							"protocol": "http",
-							"host": [
-								"localhost"
-							],
+							"host": ["localhost"],
 							"port": "8080",
-							"path": [
-								"api",
-								"barbers",
-								""
-							],
+							"path": ["api", "barbers", ""],
 							"query": [
 								{
 									"key": "minRating",
@@ -1098,15 +894,8 @@
 						"url": {
 							"raw": "https://barberly/api/orders/5/complete",
 							"protocol": "https",
-							"host": [
-								"barberly"
-							],
-							"path": [
-								"api",
-								"orders",
-								"5",
-								"complete"
-							]
+							"host": ["barberly"],
+							"path": ["api", "orders", "5", "complete"]
 						}
 					},
 					"response": []
@@ -1139,9 +928,7 @@
 				"type": "text/javascript",
 				"packages": {},
 				"requests": {},
-				"exec": [
-					""
-				]
+				"exec": [""]
 			}
 		},
 		{
@@ -1150,9 +937,7 @@
 				"type": "text/javascript",
 				"packages": {},
 				"requests": {},
-				"exec": [
-					""
-				]
+				"exec": [""]
 			}
 		}
 	],

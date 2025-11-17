@@ -286,7 +286,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
 
                       // Action Buttons
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        mainAxisAlignment: .spaceAround,
                         children: [
                           _buildActionButton(
                             icon: SvgPicture.asset(
