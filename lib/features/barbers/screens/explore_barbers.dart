@@ -371,7 +371,7 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BarberDetailScreen(barber: widget.barber),
+          builder: (context) => const BarberDetailScreen(tenantId: ''),
         ),
       );
     } finally {
@@ -540,7 +540,7 @@ class _BarberListItemState extends State<_BarberListItem> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BarberDetailScreen(barber: widget.barber),
+          builder: (context) => const BarberDetailScreen(tenantId: ''),
         ),
       );
     } finally {

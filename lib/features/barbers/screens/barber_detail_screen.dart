@@ -1,7 +1,6 @@
-// ignore_for_file: library_private_types_in_public_api, deprecated_member_use
-
 import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
 import 'package:barberly/core/models/barber.dart';
+import 'package:barberly/features/barbers/providers/barbers_provider.dart';
 import 'package:barberly/features/booking/screens/booking_appointment.dart';
 import 'package:barberly/features/chat/providers/chat_provider.dart';
 import 'package:barberly/features/chat/screens/message_screen.dart';
@@ -10,8 +9,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class BarberDetailScreen extends ConsumerStatefulWidget {
-  final Barber barber;
-  const BarberDetailScreen({super.key, required this.barber});
+  final dynamic tenantId;
+  const BarberDetailScreen({super.key, required this.tenantId});
 
   @override
   ConsumerState<BarberDetailScreen> createState() => _BarberDetailScreenState();
@@ -29,10 +28,16 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
   @override
   void initState() {
     super.initState();
+
     _tabController = TabController(length: 3, vsync: this);
     _animation = _tabController.animation!;
     selectedTabIndex = _tabController.index;
     _animation.addListener(_onAnimationChanged);
+    Future.microtask(
+      () => ref
+          .read(barbersControllerProvider.notifier)
+          .fetchTenantById(int.parse(widget.tenantId)),
+    );
   }
 
   void _onAnimationChanged() {
@@ -51,7 +56,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     super.dispose();
   }
 
-  Future<void> _navigateToBooking() async {
+  Future<void> _navigateToBooking(dynamic barber) async {
     if (_isBookingLoading) return;
 
     setState(() {
@@ -62,7 +67,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => BookingAppointment(barber: widget.barber),
+          builder: (context) => BookingAppointment(barber: barber),
         ),
       );
     } finally {
@@ -74,7 +79,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     }
   }
 
-  Future<void> _openChat() async {
+  Future<void> _openChat(dynamic barber) async {
     if (_isChatLoading) return;
 
     final user = ref.read(authStateProvider).value;
@@ -99,8 +104,8 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       final chatRoomId = await ref
           .read(chatControllerProvider.notifier)
           .createChatRoom(
-            barberPhone: widget.barber.phone,
-            barberId: widget.barber.id,
+            barberPhone: barber.phone,
+            barberId: barber.id,
             clientName: user.displayName,
             clientImageUrl: user.photoURL,
             clientId: user.uid,
@@ -111,10 +116,8 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => MessagesScreen(
-              chatRoomId: chatRoomId,
-              barberId: widget.barber.id,
-            ),
+            builder: (_) =>
+                MessagesScreen(chatRoomId: chatRoomId, barberId: barber.id),
           ),
         );
       }
@@ -138,11 +141,12 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
 
   @override
   Widget build(BuildContext context) {
+    final tenatById = ref.watch(barbersControllerProvider);
+
     return Scaffold(
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // Header Image with Back Button and Open Badge
           Stack(
             children: [
               Container(
@@ -199,193 +203,213 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
             ],
           ),
 
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Title
-                      Text(
-                        widget.barber.name,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-
-                      // Location
-                      if (widget.barber.location != null)
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              widget.barber.distance != null
-                                  ? '${widget.barber.location} • ${widget.barber.distance}'
-                                  : widget.barber.location!,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        )
-                      else
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.location_on,
-                              size: 16,
-                              color: Colors.grey[600],
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Location not specified',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                          ],
-                        ),
-                      const SizedBox(height: 6),
-
-                      // Rating
-                      Row(
+          tenatById.status.when(
+            data: (_) {
+              final tenant = tenatById.selectedTenant;
+              if (tenant == null) {
+                return const Expanded(
+                  child: Center(
+                    child: Text(
+                      'Barber not found',
+                      style: TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  ),
+                );
+              }
+              return Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.star, size: 16, color: Colors.amber),
-                          const SizedBox(width: 4),
                           Text(
-                            widget.barber.rating.toString(),
+                            tenant.name,
                             style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '(${double.parse(widget.barber.rating.toString()) >= 0 ? '24' : '0'})',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
+                          const SizedBox(height: 8),
+                          // Location
+                          if (tenant.location != null)
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  tenant.distance != null
+                                      ? '${tenant.location} • ${tenant.distance}'
+                                      : tenant.location!,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            )
+                          else
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on,
+                                  size: 16,
+                                  color: Colors.grey[600],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Location not specified',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
                             ),
+                          const SizedBox(height: 6),
+                          // Rating
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.star,
+                                size: 16,
+                                color: Colors.amber,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                tenant.rating.toString(),
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '(${double.parse(tenant.rating.toString())})',
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          // Action Buttons
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              _buildActionButton(
+                                icon: SvgPicture.asset(
+                                  'assets/icons/google_maps.svg',
+                                  width: 24,
+                                  height: 24,
+                                ),
+                                label: 'Maps',
+                                color: const Color(0xFF2C3E7C),
+                                onTap: () {},
+                              ),
+                              _buildActionButton(
+                                icon: _isChatLoading
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor:
+                                              AlwaysStoppedAnimation<Color>(
+                                                Color(0xFF2C3E7C),
+                                              ),
+                                        ),
+                                      )
+                                    : SvgPicture.asset('assets/icons/chat.svg'),
+                                label: 'Chat',
+                                color: const Color(0xFF2C3E7C),
+                                onTap: _isChatLoading
+                                    ? null
+                                    : () => _openChat(tenant),
+                              ),
+                              _buildActionButton(
+                                icon: const Icon(Icons.share_outlined),
+                                label: 'Share',
+                                color: Colors.grey[700]!,
+                                onTap: () {},
+                              ),
+                              _buildActionButton(
+                                icon: isFavorite
+                                    ? const Icon(
+                                        Icons.favorite,
+                                        color: Colors.pink,
+                                      )
+                                    : const Icon(Icons.favorite_border),
+                                label: 'Favorite',
+                                color: Colors.pink,
+                                onTap: () {
+                                  setState(() {
+                                    isFavorite = !isFavorite;
+                                  });
+                                },
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-
-                      // Action Buttons
-                      Row(
-                        mainAxisAlignment: .spaceAround,
+                    ),
+                    const SizedBox(height: 8),
+                    // Custom Tab Bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Row(
                         children: [
-                          _buildActionButton(
-                            icon: SvgPicture.asset(
-                              'assets/icons/google_maps.svg',
-                              width: 24,
-                              height: 24,
-                            ),
-                            label: 'Maps',
-                            color: const Color(0xFF2C3E7C),
-                            onTap: () {
-                              // TODO: Open maps
-                            },
+                          _buildCustomTab(
+                            icon: Icons.groups_outlined,
+                            label: 'About',
+                            index: 0,
                           ),
-                          _buildActionButton(
-                            icon: _isChatLoading
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      valueColor: AlwaysStoppedAnimation<Color>(
-                                        Color(0xFF2C3E7C),
-                                      ),
-                                    ),
-                                  )
-                                : SvgPicture.asset('assets/icons/chat.svg'),
-                            label: 'Chat',
-                            color: const Color(0xFF2C3E7C),
-                            onTap: _isChatLoading ? null : _openChat,
+                          const SizedBox(width: 12),
+                          _buildCustomTab(
+                            icon: Icons.content_cut_outlined,
+                            label: 'Service',
+                            index: 1,
                           ),
-                          _buildActionButton(
-                            icon: const Icon(Icons.share_outlined),
-                            label: 'Share',
-                            color: Colors.grey[700]!,
-                            onTap: () {
-                              // TODO: Share functionality
-                            },
-                          ),
-                          _buildActionButton(
-                            icon: isFavorite
-                                ? const Icon(Icons.favorite, color: Colors.pink)
-                                : const Icon(Icons.favorite_border),
-                            label: 'Favorite',
-                            color: Colors.pink,
-                            onTap: () {
-                              setState(() {
-                                isFavorite = !isFavorite;
-                              });
-                            },
+                          const SizedBox(width: 12),
+                          _buildCustomTab(
+                            icon: Icons.calendar_today_outlined,
+                            label: 'Schedule',
+                            index: 2,
                           ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                // Custom Tab Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: Row(
-                    children: [
-                      _buildCustomTab(
-                        icon: Icons.groups_outlined,
-                        label: 'About',
-                        index: 0,
+                    ),
+                    const SizedBox(height: 16),
+                    // Tab Bar View Content
+                    Expanded(
+                      child: TabBarView(
+                        controller: _tabController,
+                        children: [
+                          _buildAboutTab(tenant),
+                          _buildServiceTab(tenant.services),
+                          _buildScheduleTab(),
+                        ],
                       ),
-                      const SizedBox(width: 12),
-                      _buildCustomTab(
-                        icon: Icons.content_cut_outlined,
-                        label: 'Service',
-                        index: 1,
-                      ),
-                      const SizedBox(width: 12),
-                      _buildCustomTab(
-                        icon: Icons.calendar_today_outlined,
-                        label: 'Schedule',
-                        index: 2,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-
-                const SizedBox(height: 16),
-
-                // Tab Bar View Content
-                Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      _buildAboutTab(),
-                      _buildServiceTab(),
-                      _buildScheduleTab(),
-                    ],
-                  ),
-                ),
-              ],
+              );
+            },
+            loading: () => const Expanded(
+              child: Center(child: CircularProgressIndicator()),
             ),
+            error: (e, _) {
+              return const Expanded(
+                child: Center(child: Text('Failed to load barber details')),
+              );
+            },
           ),
 
           // Bottom Button
@@ -405,7 +429,9 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _isBookingLoading ? null : _navigateToBooking,
+                onPressed: _isBookingLoading
+                    ? null
+                    : () => _navigateToBooking(tenatById.selectedTenant),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2C3E7C),
                   disabledBackgroundColor: Colors.grey[400],
@@ -521,13 +547,13 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     );
   }
 
-  Widget _buildAboutTab() {
+  Widget _buildAboutTab(Tenant tenant) {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (widget.barber.bio != null && widget.barber.bio!.isNotEmpty)
+          if (tenant.bio != null && tenant.bio!.isNotEmpty)
             RichText(
               text: TextSpan(
                 style: TextStyle(
@@ -537,7 +563,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
                 ),
                 children: [
                   TextSpan(
-                    text: widget.barber.bio!,
+                    text: tenant.bio!,
                     style: const TextStyle(fontSize: 16, color: Colors.black),
                   ),
                   WidgetSpan(
@@ -580,23 +606,23 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 14),
-          if (widget.barber.phone != null && widget.barber.phone!.isNotEmpty)
+          if (tenant.phone != null && tenant.phone!.isNotEmpty)
             _buildInfoRow(
               icon: Icons.phone,
               label: 'Phone',
-              value: widget.barber.phone!,
+              value: tenant.phone!,
             ),
-          if (widget.barber.email != null && widget.barber.email!.isNotEmpty)
+          if (tenant.email != null && tenant.email!.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 10),
               child: _buildInfoRow(
                 icon: Icons.email,
                 label: 'Email',
-                value: widget.barber.email!,
+                value: tenant.email!,
               ),
             ),
-          if ((widget.barber.phone == null || widget.barber.phone!.isEmpty) &&
-              (widget.barber.email == null || widget.barber.email!.isEmpty))
+          if ((tenant.phone == null || tenant.phone!.isEmpty) &&
+              (tenant.email == null || tenant.email!.isEmpty))
             Text(
               'No contact information available',
               style: TextStyle(
@@ -605,15 +631,49 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
                 fontStyle: FontStyle.italic,
               ),
             ),
+          const SizedBox(height: 12),
+          const Row(
+            children: [
+              Icon(Icons.groups_outlined),
+              SizedBox(width: 10),
+              Text(
+                'Our Team',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          ...tenant.barbers!.map((barber) {
+            return ListTile(
+              leading: CircleAvatar(child: Text(barber.name.substring(0, 1))),
+              title: Text(barber.name),
+              subtitle: Text(barber.bio!),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min, // вот спасатель
+                children: [
+                  const Icon(Icons.star, color: Colors.yellow),
+                  const SizedBox(width: 8),
+                  Text(barber.rating.toString()),
+                ],
+              ),
+            );
+          }),
+
+          // const ListTile(
+          //   leading: CircleAvatar(),
+          //   title: Text('Member'),
+          //   subtitle: Text('Hair dresser'),
+          //   trailing: Row(
+          //     mainAxisSize: MainAxisSize.min, // вот спасатель
+          //     children: [Icon(Icons.star), SizedBox(width: 8), Text('5.0')],
+          //   ),
+          // ),
           const SizedBox(height: 20),
         ],
       ),
     );
   }
 
-  Widget _buildServiceTab() {
-    final services = widget.barber.services ?? [];
-
+  Widget _buildServiceTab(List services) {
     if (services.isEmpty) {
       return Center(
         child: Column(

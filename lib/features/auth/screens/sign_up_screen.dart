@@ -1,3 +1,5 @@
+// ignore_for_file: unused_local_variable
+
 import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
 import 'package:barberly/core/models/user_credentils.dart';
 import 'package:barberly/core/widgets/my_textfield.dart';

@@ -1,13 +1,12 @@
 // ignore_for_file: deprecated_member_use
 
-import 'package:barberly/core/models/barber.dart';
 import 'package:barberly/features/booking/screens/your_appointment_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:syncfusion_flutter_datepicker/datepicker.dart';
 
 class BookingAppointment extends StatefulWidget {
-  final Barber? barber;
+  final dynamic barber;
   const BookingAppointment({super.key, this.barber});
 
   @override
@@ -89,24 +88,7 @@ class _BookingAppointmentState extends State<BookingAppointment> {
 
   // ======= Services =======
   Widget _services() {
-    // final List<Map<String, String>> services = [
-    //   {
-    //     'imagePath': 'assets/images/basic_haircut.png',
-    //     'label': 'Basic haircut',
-    //     'price': '\$20',
-    //   },
-    //   {
-    //     'imagePath': 'assets/images/kids_haircut.png',
-    //     'label': 'Kids haircut',
-    //     'price': '\$15',
-    //   },
-    //   {
-    //     'imagePath': 'assets/images/hair_coloring.png',
-    //     'label': 'Hair coloring',
-    //     'price': '\$30',
-    //   },
-    // ];
-    final services = widget.barber!.services ?? [];
+    final services = widget.barber?.services ?? [];
 
     return SizedBox(
       height: 130,

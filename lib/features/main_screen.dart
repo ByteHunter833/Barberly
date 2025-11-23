@@ -1,8 +1,8 @@
+import 'package:barberly/core/storage/localstorage_service.dart';
+import 'package:barberly/features/barbers/screens/home_page.dart';
 import 'package:barberly/features/booking/screens/booking_screen.dart';
 import 'package:barberly/features/chat/screens/chat_screen.dart';
-import 'package:barberly/features/barbers/screens/home_page.dart';
 import 'package:barberly/features/profile/screens/profile_screen.dart';
-import 'package:barberly/core/storage/localstorage_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -32,9 +32,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   }
 
   void _onItemTapped(int index) {
-    // final user = await LocalStorage.getUserName();
-    // print(user);
-
     setState(() => _selectedIndex = index);
   }
 
