@@ -7,6 +7,10 @@ import 'package:barberly/features/chat/screens/message_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
+
+import 'map_screen.dart';
+
 
 class BarberDetailScreen extends ConsumerStatefulWidget {
   final dynamic tenantId;
@@ -24,11 +28,11 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
   int selectedTabIndex = 0;
   bool _isBookingLoading = false;
   bool _isChatLoading = false;
+  bool serviceEnabledCtx = false;
 
   @override
   void initState() {
     super.initState();
-
     _tabController = TabController(length: 3, vsync: this);
     _animation = _tabController.animation!;
     selectedTabIndex = _tabController.index;
@@ -147,6 +151,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       backgroundColor: Colors.white,
       body: Column(
         children: [
+          // Header Image with Back Button and Open Badge
           Stack(
             children: [
               Container(
@@ -312,7 +317,21 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
                                 ),
                                 label: 'Maps',
                                 color: const Color(0xFF2C3E7C),
-                                onTap: () {},
+                                onTap: () async {
+                                  // TODO: Open maps
+                                  Future.microtask(() {
+                                    checkLocationService(context);
+                                  });
+                                  if(serviceEnabledCtx){
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => MapScreen(),
+                                      ),
+                                    );
+                                  }
+
+                                },
                               ),
                               _buildActionButton(
                                 icon: _isChatLoading
@@ -892,4 +911,38 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       ],
     );
   }
+
+
+
+  Future<void> checkLocationService(BuildContext context) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    setState(() {
+      serviceEnabledCtx = serviceEnabled;
+    });
+
+    if (!serviceEnabled) {
+      // GPS o‘chik — dialog chiqaramiz
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Location o‘chirilgan"),
+          content: Text("Iltimos, joylashuv (GPS) ni yoqing."),
+          actions: [
+            TextButton(
+              child: Text("Bekor qilish"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text("Location yoqish"),
+              onPressed: () async {
+                Navigator.pop(context);
+                await Geolocator.openLocationSettings();
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
 }
