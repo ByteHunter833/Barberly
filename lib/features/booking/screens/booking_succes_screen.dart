@@ -2,10 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 class BookingSuccessScreen extends StatelessWidget {
-  const BookingSuccessScreen({super.key});
+  final Map<String, dynamic>? bookingData;
+
+  const BookingSuccessScreen({super.key, this.bookingData});
 
   @override
   Widget build(BuildContext context) {
+    final barber = bookingData?['barber'];
+    final services = bookingData?['services'] as List<dynamic>? ?? [];
+    final date = bookingData?['date'] ?? '';
+    final time = bookingData?['time'] ?? '';
+
+    double totalPrice = 0;
+    for (var service in services) {
+      totalPrice += double.tryParse(service['price']?.toString() ?? '0') ?? 0;
+    }
+
+    String servicesText = services.map((s) => s['name'] ?? '').join(', ');
+    if (servicesText.isEmpty) servicesText = 'No services';
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: const Color(0xff363062),
@@ -79,17 +94,17 @@ class BookingSuccessScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
-                            'Master piece Barbershop...',
-                            style: TextStyle(
+                            barber.name,
+                            style: const TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
                         Text(
-                          'Sun, 15 Jan',
+                          date + '-' + time,
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -99,15 +114,31 @@ class BookingSuccessScreen extends StatelessWidget {
                     ),
 
                     const SizedBox(height: 6),
-                    Text(
-                      'Basic haircut, Massage',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
+                    // Text(
+                    //   'Basic haircut, Massage',
+                    //   style: TextStyle(
+                    //     fontSize: 14,
+                    //     color: Colors.grey.shade600,
+                    //   ),
+                    // ),
+                    ...services.asMap().entries.map((entry) {
+                      final service = entry.value;
+                      final isLast = entry.key == services.length - 1;
+                      return Row(
+                        children: [
+                          Text(
+                            service['name'],
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          if (!isLast) const SizedBox(width: 8),
+                        ],
+                      );
+                    }),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 12),
 
                     // Payment summary
                     const Text(
@@ -118,90 +149,124 @@ class BookingSuccessScreen extends StatelessWidget {
                       ),
                     ),
 
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
 
-                    _buildSummaryRow('Basic haircut', '\$20'),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow('Extra massage', '\$10'),
-                    const SizedBox(height: 12),
-                    _buildSummaryRow(
-                      'Coupon discount',
-                      '- \$5',
-                      valueColor: Colors.green,
-                    ),
+                    ...services.asMap().entries.map((entry) {
+                      final service = entry.value;
+                      final isLast = entry.key == services.length - 1;
+                      return Column(
+                        children: [
+                          _buildSummaryRow(
+                            service['name'],
+                            '\$${service['price']}',
+                          ),
+                          if (!isLast) const SizedBox(height: 16),
+                        ],
+                      );
+                    }),
 
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 16),
 
-                    _buildSummaryRow('Total price', '\$25', isTotal: true),
+                    _buildSummaryRow(
+                      'Total price',
+                      '$totalPrice',
+                      isTotal: true,
+                    ),
 
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
 
                     // Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          flex: 2,
-                          child: SizedBox(
-                            height: 54,
-                            child: ElevatedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF3D3080),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Text(
-                                'Back',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
+                    // Row(
+                    //   children: [
+                    //     Expanded(
+                    //       flex: 2,
+                    //       child: SizedBox(
+                    //         height: 54,
+                    //         child: ElevatedButton(
+                    //           onPressed: () => Navigator.pop(context),
+                    //           style: ElevatedButton.styleFrom(
+                    //             backgroundColor: const Color(0xFF3D3080),
+                    //             shape: RoundedRectangleBorder(
+                    //               borderRadius: BorderRadius.circular(12),
+                    //             ),
+                    //           ),
+                    //           child: const Text(
+                    //             'Back',
+                    //             style: TextStyle(
+                    //               fontSize: 16,
+                    //               fontWeight: FontWeight.w600,
+                    //               color: Colors.white,
+                    //             ),
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //     const SizedBox(width: 12),
+                    //     Expanded(
+                    //       flex: 3,
+                    //       child: SizedBox(
+                    //         height: 54,
+                    //         child: OutlinedButton(
+                    //           onPressed: () {},
+                    //           style: OutlinedButton.styleFrom(
+                    //             side: const BorderSide(
+                    //               color: Color(0xFF3D3080),
+                    //               width: 2,
+                    //             ),
+                    //             shape: RoundedRectangleBorder(
+                    //               borderRadius: BorderRadius.circular(12),
+                    //             ),
+                    //           ),
+                    //           child: const Row(
+                    //             mainAxisAlignment: MainAxisAlignment.center,
+                    //             children: [
+                    //               Text(
+                    //                 'Download',
+                    //                 style: TextStyle(
+                    //                   fontSize: 16,
+                    //                   fontWeight: FontWeight.w600,
+                    //                   color: Color(0xFF3D3080),
+                    //                 ),
+                    //               ),
+                    //               SizedBox(width: 8),
+                    //               Icon(
+                    //                 Icons.cloud_download_outlined,
+                    //                 color: Color(0xFF3D3080),
+                    //               ),
+                    //             ],
+                    //           ),
+                    //         ),
+                    //       ),
+                    //     ),
+                    //   ],
+                    // ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 54,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pushNamedAndRemoveUntil(
+                          context,
+                          '/main',
+                          (Route<dynamic> route) => false,
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF3D3080),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          flex: 3,
-                          child: SizedBox(
-                            height: 54,
-                            child: OutlinedButton(
-                              onPressed: () {},
-                              style: OutlinedButton.styleFrom(
-                                side: const BorderSide(
-                                  color: Color(0xFF3D3080),
-                                  width: 2,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                              child: const Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    'Download',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF3D3080),
-                                    ),
-                                  ),
-                                  SizedBox(width: 8),
-                                  Icon(
-                                    Icons.cloud_download_outlined,
-                                    color: Color(0xFF3D3080),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        child: const Text(
+                          'Close',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
-                      ],
+                      ),
                     ),
                     const SizedBox(height: 30),
                   ],

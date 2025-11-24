@@ -41,6 +41,8 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
     double discount = isCouponApplied ? totalPrice * 0.1 : 0;
     double finalPrice = totalPrice - discount;
 
+    print(widget.bookingData);
+
     return Scaffold(
       backgroundColor: const Color(0xff363062),
       appBar: AppBar(
@@ -378,7 +380,6 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
 
   Future<void> _handlePayNow() async {
     if (widget.bookingData == null) return;
-
     final barberId = widget.bookingData?['barberId']?.toString();
     final tenantId = widget.bookingData?['tenantId'];
     final serviceIds = widget.bookingData?['serviceIds'] as List<dynamic>?;
@@ -419,7 +420,8 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => const BookingSuccessScreen(),
+              builder: (context) =>
+                  BookingSuccessScreen(bookingData: widget.bookingData),
             ),
           );
         }
@@ -427,7 +429,8 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(result['message'] ?? 'Failed to create order')),
+              content: Text(result['message'] ?? 'Failed to create order'),
+            ),
           );
         }
       }
@@ -437,9 +440,9 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
