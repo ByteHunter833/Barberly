@@ -1,16 +1,12 @@
 import 'package:barberly/core/firebase_service/firebase_auth_provider.dart';
 import 'package:barberly/core/models/barber.dart';
-import 'package:barberly/features/barbers/providers/barbers_provider.dart';
 import 'package:barberly/features/booking/screens/booking_appointment.dart';
 import 'package:barberly/features/chat/providers/chat_provider.dart';
 import 'package:barberly/features/chat/screens/message_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import 'map_screen.dart';
 
 
 class BarberDetailScreen extends ConsumerStatefulWidget {

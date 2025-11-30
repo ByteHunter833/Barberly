@@ -1,4 +1,3 @@
-import 'package:barberly/core/models/barber.dart';
 import 'package:barberly/core/models/new_barber.dart';
 import 'package:barberly/features/barbers/providers/barbers_provider.dart';
 import 'package:barberly/features/barbers/screens/barber_detail_screen.dart';
@@ -80,7 +79,7 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
 
   @override
   Widget build(BuildContext context) {
-    final barbersState = ref.watch(barbersControllerProvider);
+    // final barbersState = ref.watch(barbersControllerProvider);
     final nearestTenantState = ref.watch(barbersControllerProvider);
 
     return Scaffold(
@@ -474,7 +473,7 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    if (widget.nearestTenant.name != null)
+                    if (widget.nearestTenant.name.isNotEmpty)
                       Row(
                         children: [
                           const Icon(
@@ -630,7 +629,7 @@ class _BarberListItemState extends State<_BarberListItem> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-                        if (widget.nearestTenant.name != null)
+                        if (widget.nearestTenant.name.isNotEmpty)
                           Row(
                             children: [
                               const Icon(
