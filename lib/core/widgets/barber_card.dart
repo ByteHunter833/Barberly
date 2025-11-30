@@ -128,7 +128,7 @@ class BarberCardState extends State<BarberCard> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  '${widget.barber.location} • ${widget.barber.distance ?? 'N/A'}',
+                                  '${widget.barber.distance ?? 'N/A'}',
                                   style: const TextStyle(
                                     fontSize: 12,
                                     color: Color(0xff6B7280),

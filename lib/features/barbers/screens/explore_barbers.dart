@@ -1,4 +1,4 @@
-import 'package:barberly/core/models/barber.dart';
+import 'package:barberly/core/models/new_barber.dart';
 import 'package:barberly/features/barbers/providers/barbers_provider.dart';
 import 'package:barberly/features/barbers/screens/barber_detail_screen.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +42,9 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
 
     // Загружаем барберов при старте
     Future.microtask(
-      () => ref.read(barbersControllerProvider.notifier).loadBarbers(),
+      // () => ref.read(barbersControllerProvider.notifier).loadBarbers(),
+      () => ref.read(barbersControllerProvider.notifier).postOrders(),
+
     );
   }
 
@@ -63,21 +65,22 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
     super.dispose();
   }
 
-  List<Barber> _filterBarbers(List<Barber> barbers) {
+  List<NearestTenant> _filterBarbers(List<NearestTenant> tenant) {
     if (_searchQuery.isEmpty) {
-      return barbers;
+      return tenant;
     }
 
-    return barbers.where((barber) {
+    return tenant.where((barber) {
       final name = barber.name.toLowerCase();
-      final location = (barber.location ?? '').toLowerCase();
-      return name.contains(_searchQuery) || location.contains(_searchQuery);
+      // final location = (barber.location ?? '').toLowerCase();
+      return name.contains(_searchQuery) ;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final barbersState = ref.watch(barbersControllerProvider);
+    // final barbersState = ref.watch(barbersControllerProvider);
+    final nearestTenantState = ref.watch(barbersControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -101,18 +104,20 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
       ),
       body: RefreshIndicator(
         onRefresh: () async {
-          await ref.read(barbersControllerProvider.notifier).loadBarbers();
+          await ref.read(barbersControllerProvider.notifier).postOrders();
         },
         child: Column(
           children: [
             // Featured Barber Card
-            barbersState.status.when(
+            nearestTenantState.status.when(
               data: (_) {
-                if (barbersState.barbers.isEmpty) {
+                print(" malumotla soni nicha akan qaniiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiii${nearestTenantState.nearestTenants.length}");
+                if (nearestTenantState.nearestTenants.isEmpty) {
                   return const SizedBox.shrink();
                 }
-                final featuredBarber = barbersState.barbers[0];
-                return _FeaturedBarberCard(barber: featuredBarber);
+                // final featuredBarber = barbersState.barbers[0];
+                final futuredTenant = nearestTenantState.nearestTenants[0];
+                return _FeaturedBarberCard(nearestTenant: futuredTenant);
               },
               loading: () => Container(
                 margin: const EdgeInsets.all(16),
@@ -235,9 +240,9 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
 
             // Barber List
             Expanded(
-              child: barbersState.status.when(
+              child: nearestTenantState.status.when(
                 data: (_) {
-                  final filteredBarbers = _filterBarbers(barbersState.barbers);
+                  final filteredBarbers = _filterBarbers(nearestTenantState.nearestTenants);
 
                   if (filteredBarbers.isEmpty) {
                     return Center(
@@ -282,7 +287,7 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
                     physics: const BouncingScrollPhysics(),
                     children: services.map((service) {
                       // Пропускаем первого барбера так как он в featured card
-                      final barbersToShow = filteredBarbers.length > 1
+                      final barbersToShow = filteredBarbers.length >= 1
                           ? filteredBarbers.sublist(1)
                           : filteredBarbers;
 
@@ -290,8 +295,8 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         itemCount: barbersToShow.length,
                         itemBuilder: (context, index) {
-                          final barber = barbersToShow[index];
-                          return _BarberListItem(barber: barber);
+                          final tenant = barbersToShow[index];
+                          return _BarberListItem(nearestTenant: tenant);
                         },
                       );
                     }).toList(),
@@ -327,7 +332,7 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
                         onPressed: () {
                           ref
                               .read(barbersControllerProvider.notifier)
-                              .loadBarbers();
+                              .postOrders();
                         },
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry'),
@@ -349,9 +354,9 @@ class _ExploreBarbersState extends ConsumerState<ExploreBarbers>
 }
 
 class _FeaturedBarberCard extends StatefulWidget {
-  final Barber barber;
-
-  const _FeaturedBarberCard({required this.barber});
+  // final Barber barber;
+  final NearestTenant nearestTenant;
+  const _FeaturedBarberCard({required this.nearestTenant});
 
   @override
   State<_FeaturedBarberCard> createState() => _FeaturedBarberCardState();
@@ -459,7 +464,7 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.barber.name,
+                      widget.nearestTenant.name,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -468,7 +473,7 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 4),
-                    if (widget.barber.location != null)
+                    if (widget.nearestTenant.name.isNotEmpty)
                       Row(
                         children: [
                           const Icon(
@@ -479,9 +484,9 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
-                              widget.barber.distance != null
-                                  ? '${widget.barber.location} (${widget.barber.distance})'
-                                  : widget.barber.location!,
+                              widget.nearestTenant.distance.toString() ,//!= null
+    // ? '${widget.barber.location} (${widget.barber.distance})'
+    //     : widget.barber.location!
                               style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.grey,
@@ -497,13 +502,13 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
                       children: [
                         const Icon(Icons.star, size: 14, color: Colors.amber),
                         const SizedBox(width: 4),
-                        Text(
-                          widget.barber.rating.toString(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                        // Text(
+                        //   widget.barber.rating.toString(),
+                        //   style: const TextStyle(
+                        //     fontSize: 12,
+                        //     fontWeight: FontWeight.w500,
+                        //   ),
+                        // ),
                       ],
                     ),
                   ],
@@ -518,9 +523,10 @@ class _FeaturedBarberCardState extends State<_FeaturedBarberCard> {
 }
 
 class _BarberListItem extends StatefulWidget {
-  final Barber barber;
+  // final Barber barber;
+  final NearestTenant nearestTenant;
 
-  const _BarberListItem({required this.barber});
+  const _BarberListItem({ required this.nearestTenant});
 
   @override
   State<_BarberListItem> createState() => _BarberListItemState();
@@ -614,7 +620,7 @@ class _BarberListItemState extends State<_BarberListItem> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          widget.barber.name,
+                          widget.nearestTenant.name,
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -623,7 +629,7 @@ class _BarberListItemState extends State<_BarberListItem> {
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 6),
-                        if (widget.barber.location != null)
+                        if (widget.nearestTenant.name.isNotEmpty)
                           Row(
                             children: [
                               const Icon(
@@ -634,9 +640,10 @@ class _BarberListItemState extends State<_BarberListItem> {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  widget.barber.distance != null
-                                      ? '${widget.barber.location} (${widget.barber.distance})'
-                                      : widget.barber.location!,
+                                  widget.nearestTenant.distance.toString(),
+                                  // != null
+                                  //     ? '${widget.barber.location} (${widget.barber.distance})'
+                                  //     : widget.barber.location!,
                                   style: const TextStyle(
                                     fontSize: 11,
                                     color: Colors.grey,
@@ -656,13 +663,13 @@ class _BarberListItemState extends State<_BarberListItem> {
                               color: Colors.amber,
                             ),
                             const SizedBox(width: 4),
-                            Text(
-                              widget.barber.rating.toString(),
-                              style: const TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
+                            // Text(
+                            //   widget.barber.rating.toString(),
+                            //   style: const TextStyle(
+                            //     fontSize: 11,
+                            //     fontWeight: FontWeight.w500,
+                            //   ),
+                            // ),
                           ],
                         ),
                       ],

@@ -18,6 +18,7 @@ class ApiService {
   }
 
   // Или обычный сеттер
+
   void setToken(String token) => _token = token;
   void clearToken() => _token = null;
 

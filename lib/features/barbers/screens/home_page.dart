@@ -6,6 +6,7 @@ import 'package:barberly/features/barbers/screens/explore_barbers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 class HomePage extends ConsumerStatefulWidget {
@@ -19,13 +20,14 @@ class HomePage extends ConsumerStatefulWidget {
 class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool serviceEnabledCtx = false;
 
   @override
   void initState() {
     super.initState();
-
+    checkLocationService(context);
     Future.microtask(
-      () => ref.read(barbersControllerProvider.notifier).fecthTenats(),
+      () => ref.read(barbersControllerProvider.notifier).postOrders(),
     );
 
     _searchController.addListener(() {
@@ -44,14 +46,14 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final barbersState = ref.watch(barbersControllerProvider);
-    print(barbersState.tenants);
+    print(barbersState.nearestTenants.length);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await ref.read(barbersControllerProvider.notifier).fecthTenats();
+            await ref.read(barbersControllerProvider.notifier).postOrders();
           },
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -69,60 +71,65 @@ class _HomePageState extends ConsumerState<HomePage> {
                   'Most recommended',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
+
                 const SizedBox(height: 10),
+                serviceEnabledCtx == false
+                    ? Center(child: CircularProgressIndicator())
+                    :
                 barbersState.status.when(
                   data: (_) {
-                    final filteredBarbers = _searchQuery.isEmpty
-                        ? barbersState.tenants
-                        : barbersState.tenants.where((barber) {
-                            final name = barber.name.toLowerCase();
-                            final location = (barber.location ?? '')
-                                .toLowerCase();
-                            return name.contains(_searchQuery) ||
-                                location.contains(_searchQuery);
-                          }).toList();
 
-                    if (filteredBarbers.isEmpty) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(32.0),
-                          child: Column(
-                            children: [
-                              Icon(
-                                _searchQuery.isEmpty
-                                    ? LucideIcons.users
-                                    : LucideIcons.searchX,
-                                size: 64,
-                                color: Colors.grey.shade400,
-                              ),
-                              const SizedBox(height: 16),
-                              Text(
-                                _searchQuery.isEmpty
-                                    ? 'No barbers available'
-                                    : 'No barbers found',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey.shade600,
-                                  fontWeight: FontWeight.w500,
+                      final filteredBarbers = _searchQuery.isEmpty
+                          ? barbersState.nearestTenants
+                          : barbersState.nearestTenants.where((barber) {
+                        final name = barber.name.toLowerCase();
+                        // final location = barber.location;
+
+                        return name.contains(_searchQuery);
+                      }).toList();
+
+                      if (filteredBarbers.isEmpty) {
+                        return Center(
+                          child: Padding(
+                            padding: const EdgeInsets.all(32.0),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  _searchQuery.isEmpty
+                                      ? LucideIcons.users
+                                      : LucideIcons.searchX,
+                                  size: 64,
+                                  color: Colors.grey.shade400,
                                 ),
-                              ),
-                              if (_searchQuery.isNotEmpty) ...[
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 16),
                                 Text(
-                                  'Try searching with different keywords',
+                                  _searchQuery.isEmpty
+                                      ? 'No barbers available'
+                                      : 'No barbers found',
                                   style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                    fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                if (_searchQuery.isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Try searching with different keywords',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade500,
+                                    ),
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
-                        ),
-                      );
-                    }
+                        );
+                      }
 
                     return _mostRecommendSection(context, filteredBarbers);
+
                   },
                   loading: () => const Center(
                     child: Padding(
@@ -162,9 +169,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () {
-                                ref
-                                    .read(barbersControllerProvider.notifier)
-                                    .fecthTenats();
+                                // ref
+                                //     .read(barbersControllerProvider.notifier)
+                                //     .fecthTenats();
                               },
                               icon: const Icon(LucideIcons.refreshCw),
                               label: const Text('Retry'),
@@ -180,7 +187,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                   },
                 ),
                 const SizedBox(height: 16),
-                if (barbersState.barbers.isNotEmpty && _searchQuery.isEmpty)
+                // if (barbersState.barbers.isNotEmpty && _searchQuery.isEmpty)
                   Center(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
@@ -330,4 +337,37 @@ class _HomePageState extends ConsumerState<HomePage> {
       }),
     );
   }
+
+
+  Future<void> checkLocationService(BuildContext context) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    setState(() {
+      serviceEnabledCtx = serviceEnabled;
+    });
+
+    if (!serviceEnabled) {
+      // GPS o‘chik — dialog chiqaramiz
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Location o‘chirilgan"),
+          content: Text("Iltimos, joylashuv (GPS) ni yoqing."),
+          actions: [
+            TextButton(
+              child: Text("Bekor qilish"),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: Text("Location yoqish"),
+              onPressed: () async {
+                Navigator.pop(context);
+                await Geolocator.openLocationSettings();
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
 }
