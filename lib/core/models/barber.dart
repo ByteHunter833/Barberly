@@ -1,10 +1,12 @@
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
 class Barber {
   final dynamic tenantId;
   final String id;
   final String name;
   final String imageUrl;
   final double rating;
-  final String? location;
+  final LatLng? location;
   final String? distance;
   final String? bio;
   final String? phone;
@@ -41,7 +43,7 @@ class Barber {
       // rating защищён от int, double, string
       rating: _parseRating(json['rating']),
 
-      location: json['location']?.toString() ?? 'Jogja Expo Centre',
+      location: json['location'] ,
       distance: json['distance']?.toString() ?? '2 km',
       bio:
           json['bio']?.toString() ??
@@ -65,7 +67,7 @@ class Tenant {
   final String name;
   final String imageUrl;
   final double rating;
-  final String? location;
+  final LatLng? location;
   final String? distance;
   final String? bio;
   final String? phone;
@@ -104,7 +106,7 @@ class Tenant {
       // rating защищён от int, double, string
       rating: _parseRating(json['rating']),
 
-      location: json['location']?.toString() ?? 'Jogja Expo Centre',
+      location: json['location'] ,
       distance: json['distance']?.toString() ?? '2 km',
       bio:
           json['bio']?.toString() ??

@@ -12,6 +12,6 @@ final barbersRepositoryProvider = Provider<BarbersRepository>((ref) {
 
 // Controller
 final barbersControllerProvider =
-    StateNotifierProvider<BarbersController, BarbersState>(
+    StateNotifierProvider<BarbersController, NearestTenantState>(
       (ref) => BarbersController(ref.read(barbersRepositoryProvider)),
     );

@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'map_screen.dart';
 
@@ -37,11 +38,11 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     _animation = _tabController.animation!;
     selectedTabIndex = _tabController.index;
     _animation.addListener(_onAnimationChanged);
-    Future.microtask(
-      () => ref
-          .read(barbersControllerProvider.notifier)
-          .fetchTenantById(int.parse(widget.tenantId)),
-    );
+    // Future.microtask(
+    //   () => ref
+    //       .read(barbersControllerProvider.notifier)
+    //       .fetchTenantById(int.parse(widget.tenantId)),
+    // );
   }
 
   void _onAnimationChanged() {
@@ -145,7 +146,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
 
   @override
   Widget build(BuildContext context) {
-    final tenatById = ref.watch(barbersControllerProvider);
+    // final tenatById = ref.watch(barbersControllerProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -208,228 +209,231 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
             ],
           ),
 
-          tenatById.status.when(
-            data: (_) {
-              final tenant = tenatById.selectedTenant;
-              if (tenant == null) {
-                return const Expanded(
-                  child: Center(
-                    child: Text(
-                      'Barber not found',
-                      style: TextStyle(fontSize: 16, color: Colors.red),
-                    ),
-                  ),
-                );
-              }
-              return Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            tenant.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          // Location
-                          if (tenant.location != null)
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 16,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  tenant.distance != null
-                                      ? '${tenant.location} • ${tenant.distance}'
-                                      : tenant.location!,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            )
-                          else
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on,
-                                  size: 16,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  'Location not specified',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                ),
-                              ],
-                            ),
-                          const SizedBox(height: 6),
-                          // Rating
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.star,
-                                size: 16,
-                                color: Colors.amber,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                tenant.rating.toString(),
-                                style: const TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '(${double.parse(tenant.rating.toString())})',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.grey[600],
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 20),
-                          // Action Buttons
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              _buildActionButton(
-                                icon: SvgPicture.asset(
-                                  'assets/icons/google_maps.svg',
-                                  width: 24,
-                                  height: 24,
-                                ),
-                                label: 'Maps',
-                                color: const Color(0xFF2C3E7C),
-                                onTap: () async {
-                                  // TODO: Open maps
-                                  Future.microtask(() {
-                                    checkLocationService(context);
-                                  });
-                                  if(serviceEnabledCtx){
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => MapScreen(),
-                                      ),
-                                    );
-                                  }
-
-                                },
-                              ),
-                              _buildActionButton(
-                                icon: _isChatLoading
-                                    ? const SizedBox(
-                                        width: 24,
-                                        height: 24,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          valueColor:
-                                              AlwaysStoppedAnimation<Color>(
-                                                Color(0xFF2C3E7C),
-                                              ),
-                                        ),
-                                      )
-                                    : SvgPicture.asset('assets/icons/chat.svg'),
-                                label: 'Chat',
-                                color: const Color(0xFF2C3E7C),
-                                onTap: _isChatLoading
-                                    ? null
-                                    : () => _openChat(tenant),
-                              ),
-                              _buildActionButton(
-                                icon: const Icon(Icons.share_outlined),
-                                label: 'Share',
-                                color: Colors.grey[700]!,
-                                onTap: () {},
-                              ),
-                              _buildActionButton(
-                                icon: isFavorite
-                                    ? const Icon(
-                                        Icons.favorite,
-                                        color: Colors.pink,
-                                      )
-                                    : const Icon(Icons.favorite_border),
-                                label: 'Favorite',
-                                color: Colors.pink,
-                                onTap: () {
-                                  setState(() {
-                                    isFavorite = !isFavorite;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    // Custom Tab Bar
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Row(
-                        children: [
-                          _buildCustomTab(
-                            icon: Icons.groups_outlined,
-                            label: 'About',
-                            index: 0,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildCustomTab(
-                            icon: Icons.content_cut_outlined,
-                            label: 'Service',
-                            index: 1,
-                          ),
-                          const SizedBox(width: 12),
-                          _buildCustomTab(
-                            icon: Icons.calendar_today_outlined,
-                            label: 'Schedule',
-                            index: 2,
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Tab Bar View Content
-                    Expanded(
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildAboutTab(tenant),
-                          _buildServiceTab(tenant.services),
-                          _buildScheduleTab(),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-            loading: () => const Expanded(
-              child: Center(child: CircularProgressIndicator()),
-            ),
-            error: (e, _) {
-              return const Expanded(
-                child: Center(child: Text('Failed to load barber details')),
-              );
-            },
-          ),
+          // tenatById.status.when(
+          //   data: (_) {
+          //     final tenant = tenatById.selectedTenant;
+          //     if (tenant == null) {
+          //       return const Expanded(
+          //         child: Center(
+          //           child: Text(
+          //             'Barber not found',
+          //             style: TextStyle(fontSize: 16, color: Colors.red),
+          //           ),
+          //         ),
+          //       );
+          //     }
+          //     return Expanded(
+          //       child: Column(
+          //         crossAxisAlignment: CrossAxisAlignment.start,
+          //         children: [
+          //           Padding(
+          //             padding: const EdgeInsets.all(20),
+          //             child: Column(
+          //               crossAxisAlignment: CrossAxisAlignment.start,
+          //               children: [
+          //                 Text(
+          //                   tenant.name,
+          //                   style: const TextStyle(
+          //                     fontSize: 18,
+          //                     fontWeight: FontWeight.bold,
+          //                   ),
+          //                 ),
+          //                 const SizedBox(height: 8),
+          //                 // Location
+          //                 if (tenant.location != null)
+          //                   Row(
+          //                     children: [
+          //                       Icon(
+          //                         Icons.location_on,
+          //                         size: 16,
+          //                         color: Colors.grey[600],
+          //                       ),
+          //                       const SizedBox(width: 4),
+          //                       Text(
+          //                         tenant.distance.toString(),
+          //                         //!= null
+          //                         //                                       ? '${tenant.location} • ${tenant.distance}'
+          //                         //                                       : tenant.location!,
+          //                         style: TextStyle(
+          //                           fontSize: 13,
+          //                           color: Colors.grey[600],
+          //                         ),
+          //                       ),
+          //                     ],
+          //                   )
+          //                 else
+          //                   Row(
+          //                     children: [
+          //                       Icon(
+          //                         Icons.location_on,
+          //                         size: 16,
+          //                         color: Colors.grey[600],
+          //                       ),
+          //                       const SizedBox(width: 4),
+          //                       Text(
+          //                         'Location not specified',
+          //                         style: TextStyle(
+          //                           fontSize: 13,
+          //                           color: Colors.grey[600],
+          //                         ),
+          //                       ),
+          //                     ],
+          //                   ),
+          //                 const SizedBox(height: 6),
+          //                 // Rating
+          //                 Row(
+          //                   children: [
+          //                     const Icon(
+          //                       Icons.star,
+          //                       size: 16,
+          //                       color: Colors.amber,
+          //                     ),
+          //                     const SizedBox(width: 4),
+          //                     Text(
+          //                       tenant.rating.toString(),
+          //                       style: const TextStyle(
+          //                         fontSize: 13,
+          //                         fontWeight: FontWeight.w600,
+          //                       ),
+          //                     ),
+          //                     const SizedBox(width: 4),
+          //                     Text(
+          //                       '(${double.parse(tenant.rating.toString())})',
+          //                       style: TextStyle(
+          //                         fontSize: 13,
+          //                         color: Colors.grey[600],
+          //                       ),
+          //                     ),
+          //                   ],
+          //                 ),
+          //                 const SizedBox(height: 20),
+          //                 // Action Buttons
+          //                 Row(
+          //                   mainAxisAlignment: MainAxisAlignment.spaceAround,
+          //                   children: [
+          //                     _buildActionButton(
+          //                       icon: SvgPicture.asset(
+          //                         'assets/icons/google_maps.svg',
+          //                         width: 24,
+          //                         height: 24,
+          //                       ),
+          //                       label: 'Maps',
+          //                       color: const Color(0xFF2C3E7C),
+          //                       onTap: () async {
+          //                         // TODO: Open maps
+          //                         Future.microtask(() {
+          //
+          //                           checkLocationService(context);
+          //                         });
+          //                         if(serviceEnabledCtx){
+          //                           print("tenant location keldi : ${tenant.location}");
+          //                           Navigator.push(
+          //                             context,
+          //                             MaterialPageRoute(
+          //                               builder: (_) => MapScreen(location: LatLng(41.294124,69.256257)),//tenant.location
+          //                             ),
+          //                           );
+          //                         }
+          //
+          //                       },
+          //                     ),
+          //                     _buildActionButton(
+          //                       icon: _isChatLoading
+          //                           ? const SizedBox(
+          //                               width: 24,
+          //                               height: 24,
+          //                               child: CircularProgressIndicator(
+          //                                 strokeWidth: 2,
+          //                                 valueColor:
+          //                                     AlwaysStoppedAnimation<Color>(
+          //                                       Color(0xFF2C3E7C),
+          //                                     ),
+          //                               ),
+          //                             )
+          //                           : SvgPicture.asset('assets/icons/chat.svg'),
+          //                       label: 'Chat',
+          //                       color: const Color(0xFF2C3E7C),
+          //                       onTap: _isChatLoading
+          //                           ? null
+          //                           : () => _openChat(tenant),
+          //                     ),
+          //                     _buildActionButton(
+          //                       icon: const Icon(Icons.share_outlined),
+          //                       label: 'Share',
+          //                       color: Colors.grey[700]!,
+          //                       onTap: () {},
+          //                     ),
+          //                     _buildActionButton(
+          //                       icon: isFavorite
+          //                           ? const Icon(
+          //                               Icons.favorite,
+          //                               color: Colors.pink,
+          //                             )
+          //                           : const Icon(Icons.favorite_border),
+          //                       label: 'Favorite',
+          //                       color: Colors.pink,
+          //                       onTap: () {
+          //                         setState(() {
+          //                           isFavorite = !isFavorite;
+          //                         });
+          //                       },
+          //                     ),
+          //                   ],
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //           const SizedBox(height: 8),
+          //           // Custom Tab Bar
+          //           Padding(
+          //             padding: const EdgeInsets.symmetric(horizontal: 20),
+          //             child: Row(
+          //               children: [
+          //                 _buildCustomTab(
+          //                   icon: Icons.groups_outlined,
+          //                   label: 'About',
+          //                   index: 0,
+          //                 ),
+          //                 const SizedBox(width: 12),
+          //                 _buildCustomTab(
+          //                   icon: Icons.content_cut_outlined,
+          //                   label: 'Service',
+          //                   index: 1,
+          //                 ),
+          //                 const SizedBox(width: 12),
+          //                 _buildCustomTab(
+          //                   icon: Icons.calendar_today_outlined,
+          //                   label: 'Schedule',
+          //                   index: 2,
+          //                 ),
+          //               ],
+          //             ),
+          //           ),
+          //           const SizedBox(height: 16),
+          //           // Tab Bar View Content
+          //           Expanded(
+          //             child: TabBarView(
+          //               controller: _tabController,
+          //               children: [
+          //                 _buildAboutTab(tenant),
+          //                 _buildServiceTab(tenant.services),
+          //                 _buildScheduleTab(),
+          //               ],
+          //             ),
+          //           ),
+          //         ],
+          //       ),
+          //     );
+          //   },
+          //   loading: () => const Expanded(
+          //     child: Center(child: CircularProgressIndicator()),
+          //   ),
+          //   error: (e, _) {
+          //     return const Expanded(
+          //       child: Center(child: Text('Failed to load barber details')),
+          //     );
+          //   },
+          // ),
 
           // Bottom Button
           Container(
@@ -448,9 +452,10 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: _isBookingLoading
-                    ? null
-                    : () => _navigateToBooking(tenatById.selectedTenant),
+                onPressed: (){},
+                // _isBookingLoading
+                //     ? null
+                //     : () => _navigateToBooking(tenatById.selectedTenant),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF2C3E7C),
                   disabledBackgroundColor: Colors.grey[400],

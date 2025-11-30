@@ -207,13 +207,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   size: 16,
                                 ),
                                 const SizedBox(width: 6),
-                                Text(
-                                  user?.location ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 13,
-                                  ),
-                                ),
+                                // Text(
+                                //   user?.location ?? '',
+                                //   style: const TextStyle(
+                                //     color: Colors.white70,
+                                //     fontSize: 13,
+                                //   ),
+                                // ),
                               ],
                             ),
                           ],
