@@ -8,7 +8,7 @@ import 'package:barberly/features/profile/screens/help.dart';
 import 'package:barberly/features/profile/screens/security.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -207,13 +207,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   size: 16,
                                 ),
                                 const SizedBox(width: 6),
-                                // Text(
-                                //   user?.location ?? '',
-                                //   style: const TextStyle(
-                                //     color: Colors.white70,
-                                //     fontSize: 13,
-                                //   ),
-                                // ),
+                                Text(
+                                  user?.location ?? 'Bukhara',
+                                  style: const TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: 13,
+                                  ),
+                                ),
                               ],
                             ),
                           ],
@@ -312,8 +312,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           ),
         ),
       ),
+
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, st) => Center(child: Text('Error: ${e.toString()}')),
+      error: (e, st) => Center(child: Text('Error: $e')),
     );
   }
 

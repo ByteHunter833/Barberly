@@ -7,8 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
-
-
 class BarberDetailScreen extends ConsumerStatefulWidget {
   final dynamic tenantId;
   const BarberDetailScreen({super.key, required this.tenantId});
@@ -448,7 +446,7 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: (){},
+                onPressed: () {},
                 // _isBookingLoading
                 //     ? null
                 //     : () => _navigateToBooking(tenatById.selectedTenant),
@@ -913,8 +911,6 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
     );
   }
 
-
-
   Future<void> checkLocationService(BuildContext context) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     setState(() {
@@ -926,15 +922,15 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Location o‘chirilgan"),
-          content: Text("Iltimos, joylashuv (GPS) ni yoqing."),
+          title: const Text('Location o‘chirilgan'),
+          content: const Text('Iltimos, joylashuv (GPS) ni yoqing.'),
           actions: [
             TextButton(
-              child: Text("Bekor qilish"),
+              child: const Text('Bekor qilish'),
               onPressed: () => Navigator.pop(context),
             ),
             TextButton(
-              child: Text("Location yoqish"),
+              child: const Text('Location yoqish'),
               onPressed: () async {
                 Navigator.pop(context);
                 await Geolocator.openLocationSettings();
@@ -945,5 +941,4 @@ class _BarberDetailScreenState extends ConsumerState<BarberDetailScreen>
       );
     }
   }
-
 }

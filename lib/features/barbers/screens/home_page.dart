@@ -2,7 +2,7 @@ import 'package:barberly/core/widgets/banner_home.dart';
 import 'package:barberly/core/widgets/barber_card.dart';
 import 'package:barberly/core/widgets/filter_bottom_sheet.dart';
 import 'package:barberly/features/barbers/providers/barbers_provider.dart';
-import 'package:barberly/features/barbers/screens/explore_barbers.dart';
+import 'package:barberly/features/barbers/providers/current_location_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -21,20 +21,94 @@ class _HomePageState extends ConsumerState<HomePage> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool serviceEnabledCtx = false;
+  bool permissionGranted = false;
 
   @override
   void initState() {
     super.initState();
-    checkLocationService(context);
-    Future.microtask(
-      () => ref.read(barbersControllerProvider.notifier).postOrders(),
-    );
+    initLocationFlow();
 
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase();
       });
     });
+  }
+
+  /// Основной flow для локации
+  Future<void> initLocationFlow() async {
+    await requestLocationPermission();
+    await checkLocationService(context);
+
+    if (serviceEnabledCtx && permissionGranted) {
+      Future.microtask(
+        () => ref.read(barbersControllerProvider.notifier).fetchNearestBarber(),
+      );
+    }
+  }
+
+  /// Запрашивает permission
+  Future<void> requestLocationPermission() async {
+    LocationPermission permission = await Geolocator.checkPermission();
+
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      permissionGranted = false;
+      await Geolocator.openAppSettings();
+      return;
+    }
+
+    if (permission == LocationPermission.whileInUse ||
+        permission == LocationPermission.always) {
+      permissionGranted = true;
+    }
+  }
+
+  /// Проверка GPS
+  Future<void> checkLocationService(BuildContext context) async {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    setState(() {
+      serviceEnabledCtx = serviceEnabled;
+    });
+
+    if (!serviceEnabled) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Location выключен'),
+          content: const Text('Пожалуйста, включите GPS.'),
+          actions: [
+            TextButton(
+              child: const Text('Отмена'),
+              onPressed: () => Navigator.pop(context),
+            ),
+            TextButton(
+              child: const Text('Включить GPS'),
+              onPressed: () async {
+                Navigator.pop(context);
+                await Geolocator.openLocationSettings();
+                await checkLocationService(context);
+              },
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  Future<void> printLocationFromProvider() async {
+    try {
+      Position position = await CurrentLocationProvider.determinePosition();
+      print('🌍 Current location:');
+      print('Latitude: ${position.latitude}');
+      print('Longitude: ${position.longitude}');
+      print('Timestamp: ${position.timestamp}');
+    } catch (e) {
+      print('Ошибка при получении локации: $e');
+    }
   }
 
   @override
@@ -46,14 +120,17 @@ class _HomePageState extends ConsumerState<HomePage> {
   @override
   Widget build(BuildContext context) {
     final barbersState = ref.watch(barbersControllerProvider);
-    print(barbersState.nearestTenants.length);
 
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
-            await ref.read(barbersControllerProvider.notifier).postOrders();
+            if (serviceEnabledCtx && permissionGranted) {
+              await ref
+                  .read(barbersControllerProvider.notifier)
+                  .fetchNearestBarber();
+            }
           },
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
@@ -71,24 +148,23 @@ class _HomePageState extends ConsumerState<HomePage> {
                   'Most recommended',
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
                 ),
-
                 const SizedBox(height: 10),
-                serviceEnabledCtx == false
-                    ? Center(child: CircularProgressIndicator())
-                    :
-                barbersState.status.when(
-                  data: (_) {
+                if (!serviceEnabledCtx || !permissionGranted)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  barbersState.status.when(
+                    data: (_) {
+                      // Безопасно приводим к List<NearestBarber> — если нет, то пустой список
+                      final rawList = barbersState.nearestTenants;
 
-                      final filteredBarbers = _searchQuery.isEmpty
-                          ? barbersState.nearestTenants
-                          : barbersState.nearestTenants.where((barber) {
-                        final name = barber.name.toLowerCase();
-                        // final location = barber.location;
+                      final filteredRaw = _searchQuery.isEmpty
+                          ? rawList
+                          : rawList.where((barber) {
+                              final name = barber.name.toLowerCase();
+                              return name.contains(_searchQuery);
+                            }).toList();
 
-                        return name.contains(_searchQuery);
-                      }).toList();
-
-                      if (filteredBarbers.isEmpty) {
+                      if (filteredRaw.isEmpty) {
                         return Center(
                           child: Padding(
                             padding: const EdgeInsets.all(32.0),
@@ -128,17 +204,15 @@ class _HomePageState extends ConsumerState<HomePage> {
                         );
                       }
 
-                    return _mostRecommendSection(context, filteredBarbers);
-
-                  },
-                  loading: () => const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: CircularProgressIndicator(),
+                      return _mostRecommendSection(context, filteredRaw);
+                    },
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: CircularProgressIndicator(),
+                      ),
                     ),
-                  ),
-                  error: (e, st) {
-                    return Center(
+                    error: (e, st) => Center(
                       child: Padding(
                         padding: const EdgeInsets.all(32.0),
                         child: Column(
@@ -169,9 +243,11 @@ class _HomePageState extends ConsumerState<HomePage> {
                             const SizedBox(height: 16),
                             ElevatedButton.icon(
                               onPressed: () {
-                                // ref
-                                //     .read(barbersControllerProvider.notifier)
-                                //     .fecthTenats();
+                                if (serviceEnabledCtx && permissionGranted) {
+                                  ref
+                                      .read(barbersControllerProvider.notifier)
+                                      .fetchNearestBarber();
+                                }
                               },
                               icon: const Icon(LucideIcons.refreshCw),
                               label: const Text('Retry'),
@@ -183,41 +259,32 @@ class _HomePageState extends ConsumerState<HomePage> {
                           ],
                         ),
                       ),
-                    );
-                  },
-                ),
-                const SizedBox(height: 16),
-                // if (barbersState.barbers.isNotEmpty && _searchQuery.isEmpty)
-                  Center(
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xff363062),
-                        side: const BorderSide(color: Color(0xff363062)),
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ExploreBarbers(),
-                          ),
-                        );
-                      },
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            'See All',
-                            style: TextStyle(
-                              color: Color(0xff363062),
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Icon(LucideIcons.arrowUpRightSquare),
-                        ],
-                      ),
                     ),
                   ),
+                const SizedBox(height: 16),
+                Center(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xff363062),
+                      side: const BorderSide(color: Color(0xff363062)),
+                    ),
+                    onPressed: () => {},
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'See All',
+                          style: TextStyle(
+                            color: Color(0xff363062),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(LucideIcons.arrowUpRightSquare),
+                      ],
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -330,6 +397,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _mostRecommendSection(BuildContext context, List barbers) {
+    // barbers — список Map<String, dynamic>, готовый к передаче в BarberCard
     return Column(
       children: List.generate(barbers.length, (index) {
         final barber = barbers[index];
@@ -337,37 +405,4 @@ class _HomePageState extends ConsumerState<HomePage> {
       }),
     );
   }
-
-
-  Future<void> checkLocationService(BuildContext context) async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    setState(() {
-      serviceEnabledCtx = serviceEnabled;
-    });
-
-    if (!serviceEnabled) {
-      // GPS o‘chik — dialog chiqaramiz
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text("Location o‘chirilgan"),
-          content: Text("Iltimos, joylashuv (GPS) ni yoqing."),
-          actions: [
-            TextButton(
-              child: Text("Bekor qilish"),
-              onPressed: () => Navigator.pop(context),
-            ),
-            TextButton(
-              child: Text("Location yoqish"),
-              onPressed: () async {
-                Navigator.pop(context);
-                await Geolocator.openLocationSettings();
-              },
-            ),
-          ],
-        ),
-      );
-    }
-  }
-
 }

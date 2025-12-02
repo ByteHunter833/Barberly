@@ -4,12 +4,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:barberly/features/barbers/providers/current_location_provider.dart';
 
-
 class MapScreen extends StatefulWidget {
   final LatLng? location;
 
-  const MapScreen({super.key, required this.location });
-
+  const MapScreen({super.key, required this.location});
 
   @override
   State<MapScreen> createState() => _MapScreenState();
@@ -20,13 +18,12 @@ class _MapScreenState extends State<MapScreen> {
   LatLng? origin;
   GoogleMapController? mapController;
   bool isOnline = true;
-  Set<Marker> _markers = {};
-  Set<Polyline> _polylines = {};
+  final Set<Marker> _markers = {};
+  final Set<Polyline> _polylines = {};
   // BitmapDescriptor? customIcon;
   Position? lastPosition;
 
-
-  LatLng destination = const LatLng(41.565574,60.646030);
+  LatLng destination = const LatLng(41.565574, 60.646030);
   // Future<Uint8List> getBytesFromAsset(String path, int width) async {
   //   ByteData data = await rootBundle.load(path);
   //   ui.Codec codec = await ui.instantiateImageCodec(data.buffer.asUint8List(), targetWidth: width);
@@ -80,7 +77,6 @@ class _MapScreenState extends State<MapScreen> {
     _initializeMap();
   }
 
-
   // Future<void> _getLocationAndDrawRoute() async {
   //   Position pos = await Geolocator.getCurrentPosition();
   //
@@ -129,28 +125,20 @@ class _MapScreenState extends State<MapScreen> {
   //   setState(() {});
   // }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Map'),
-      ),
+      appBar: AppBar(title: const Text('Map')),
       body: origin == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: origin!,
-          zoom: 18,
-        ),
-        onMapCreated: (controller) => mapController = controller,
-        markers: _markers,
-        polylines: _polylines,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
-      ),
-
-
+              initialCameraPosition: CameraPosition(target: origin!, zoom: 18),
+              onMapCreated: (controller) => mapController = controller,
+              markers: _markers,
+              polylines: _polylines,
+              myLocationEnabled: true,
+              myLocationButtonEnabled: true,
+            ),
     );
   }
 
@@ -162,7 +150,6 @@ class _MapScreenState extends State<MapScreen> {
       ),
     );
   }
-
 
   /// Doimiy location kuzatish
   void listenLocationChanges() {
@@ -202,15 +189,16 @@ class _MapScreenState extends State<MapScreen> {
       destLng: destination.longitude,
     );
 
-    List<LatLng> coords =
-    points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    List<LatLng> coords = points
+        .map((p) => LatLng(p.latitude, p.longitude))
+        .toList();
 
     setState(() {
       _polylines.clear(); // eski polylineni o'chirish
 
       _polylines.add(
         Polyline(
-          polylineId: const PolylineId("route"),
+          polylineId: const PolylineId('route'),
           width: 6,
           color: Colors.blue,
           points: coords,
@@ -218,17 +206,21 @@ class _MapScreenState extends State<MapScreen> {
       );
 
       _markers.clear();
-      _markers.add(Marker(
-        markerId: const MarkerId("me"),
-        position: origin!,
-        infoWindow: const InfoWindow(title: "Siz"),
-      ));
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('me'),
+          position: origin!,
+          infoWindow: const InfoWindow(title: 'Siz'),
+        ),
+      );
 
-      _markers.add(Marker(
-        markerId: const MarkerId("dest"),
-        position: destination,
-        infoWindow: const InfoWindow(title: "Manzil"),
-      ));
+      _markers.add(
+        Marker(
+          markerId: const MarkerId('dest'),
+          position: destination,
+          infoWindow: const InfoWindow(title: 'Manzil'),
+        ),
+      );
     });
   }
 
@@ -260,6 +252,4 @@ class _MapScreenState extends State<MapScreen> {
   //     );
   //   }
   // }
-
-
 }

@@ -1,61 +1,27 @@
-// import 'package:barberly/core/models/barber.dart'
-// import 'package:barberly/core/models/order.dart';
-import 'package:barberly/core/models/post_latlng.dart';
+import 'package:barberly/core/models/nearest_barber.dart';
 import 'package:barberly/core/network/api_service.dart';
-
-import '../../../core/models/new_barber.dart';
+import 'package:barberly/features/barbers/providers/current_location_provider.dart';
 
 class BarbersRepository {
   final ApiService api;
 
   BarbersRepository(this.api);
 
-  Future<List<Barber>> fetchBarbers() async {
-    final res = await api.getData('barber-all');
-    if (res['success'] == true && res['data'] != null) {
-      final List data = res['data'];
-      return data.map((b) => Barber.fromJson(b)).toList();
-    } else {
-      return [];
+  Future<List<NearestBarber>> fetchNearestBarber() async {
+    final position = await CurrentLocationProvider.determinePosition();
+
+    final response = await api.getData(
+      'tenants/nearest?lat=${position.latitude}&lng=${position.longitude}',
+    );
+
+    if (response == null || response['data'] == null) {
+      throw Exception('Failed to fetch nearest barbers');
     }
-  }
 
-  Future<List<NearestTenant>> postOrder() async {
-    final res = await api.postData('orders',PostLatlng(tenantId: 1, serviceIds: [1], barberId: 5, lat: 41.555025, lng: 60.618081).toJson() );
-    if (res['success'] == true && res['data'] != null) {
-      final List data = res['nearest_tenants'];
-      return data.map((e) => NearestTenant.fromJson(e)).toList();
-    } else {
-      return [];
-    }
-  }
-  // Future<List<Order>> fetchOrders() async {
-  //   final res = await api.getData('barber-all');
-  //   if (res['success'] == true && res['data'] != null) {
-  //     final List data = res['data'];
-  //     return data.map((b) => Order.fromJson(b)).toList();
-  //   } else {
-  //     return [];
-  //   }
-  // }
+    final tenants = response['data'] as List<dynamic>;
 
-  Future<List<Tenant>> fetchTenats() async {
-    final res = await api.getData('tenants');
-    if (res['tenant'] != null) {
-      final List data = res['tenant'];
-      return data.map((b) => Tenant.fromJson(b)).toList();
-    } else {
-      return [];
-    }
-  }
-
-
-  Future<Tenant?> fetchTenantById(int id) async {
-    final res = await api.getData('tenants/$id');
-
-    if (res['tenant'] != null) {
-      return Tenant.fromJson(res['tenant']);
-    }
-    return null;
+    return tenants
+        .map((json) => NearestBarber.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 }

@@ -7,10 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
-
 class MainScreen extends ConsumerStatefulWidget {
-   MainScreen({super.key});
-
+  const MainScreen({super.key});
 
   @override
   ConsumerState<MainScreen> createState() => _MainScreenState();
@@ -20,12 +18,10 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   int _selectedIndex = 0;
   String? _username;
 
-
   @override
   void initState() {
     super.initState();
     _loadUsername();
-
   }
 
   Future<void> _loadUsername() async {
@@ -50,7 +46,6 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final screens = [
       HomePage(user: _username ?? ''), // передаем уже готовую строку
       const BookingDetailScreen(),

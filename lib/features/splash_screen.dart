@@ -48,7 +48,7 @@ class _SplashScreenState extends State<SplashScreen>
     Widget nextScreen;
 
     if (onboardingShown && (token != null)) {
-      nextScreen =  MainScreen();
+      nextScreen = const MainScreen();
     } else if (onboardingShown & (token == null)) {
       nextScreen = const AuthScreen();
     } else {

@@ -1,11 +1,9 @@
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-
 class User {
   final int id;
   final String name;
   final String phone;
   final String balance;
-  final LatLng? location;
+  final String? location;
   final String rating;
 
   User({
