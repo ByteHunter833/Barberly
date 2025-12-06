@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
 
       routes: {
-        '/main': (context) =>  MainScreen(),
+        '/main': (context) => const MainScreen(),
         '/otp': (context) => const OtpScreen(),
         '/auth': (context) => const AuthScreen(),
       },

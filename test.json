@@ -1,39 +1,127 @@
 {
 	"message": "successful",
-	"tenant": [
-		{
-			"id": 4,
-			"name": "Xurshid Abdumannonov",
-			"phone": "981888915",
-			"balance": "0.00",
-			"phone_verified_at": null,
-			"tenant_id": 4,
-			"remember_token": null,
-			"created_at": "2025-11-22T15:49:37.000000Z",
-			"updated_at": "2025-11-22T15:49:37.000000Z",
-			"points": 0,
-			"added_by": null,
-			"location": null,
-			"distance": null,
-			"rating": "0.00",
-			"roles": ["admin-sartarosh", "admin-sartarosh"]
-		},
-		{
-			"id": 3,
-			"name": "asadbek",
-			"phone": "+998979260757",
-			"balance": "0.00",
-			"phone_verified_at": null,
-			"tenant_id": 3,
-			"remember_token": null,
-			"created_at": "2025-11-22T15:41:25.000000Z",
-			"updated_at": "2025-11-22T15:41:25.000000Z",
-			"points": 0,
-			"added_by": null,
-			"location": null,
-			"distance": null,
-			"rating": "0.00",
-			"roles": ["admin-sartarosh", "admin-sartarosh"]
-		}
-	]
+	"tenant": {
+		"id": 1,
+		"name": "Xurshid Abdumannonov",
+		"admin_name": "Xurshid Abdumannonov",
+		"phone": "998981888915",
+		"location": "LatLng(41.5565990, 60.6351120)",
+		"latitude": "41.5565990",
+		"longitude": "60.6351120",
+		"services": [
+			{
+				"id": 1,
+				"name": "soch olish",
+				"price": "200.00",
+				"service_duration": "01:30:00",
+				"created_at": "2025-11-24T07:01:13.000000Z",
+				"updated_at": "2025-11-24T07:01:13.000000Z",
+				"image": null
+			},
+			{
+				"id": 2,
+				"name": "soch olish",
+				"price": "200.00",
+				"service_duration": "01:30:00",
+				"created_at": "2025-11-24T07:02:04.000000Z",
+				"updated_at": "2025-11-24T07:02:04.000000Z",
+				"image": null
+			}
+		],
+		"barbers": [
+			{
+				"id": 2,
+				"name": "Xurshid Abdumannonov",
+				"phone": "998981888915",
+				"services": []
+			},
+			{ "id": 3, "name": "Vali", "phone": "998981888916", "services": [] },
+			{
+				"id": 4,
+				"name": "Vali aliyev",
+				"phone": "998981888917",
+				"services": [
+					{
+						"id": 1,
+						"name": "soch olish",
+						"price": "200.00",
+						"service_duration": "01:30:00",
+						"created_at": "2025-11-24T07:01:13.000000Z",
+						"updated_at": "2025-11-24T07:01:13.000000Z",
+						"image": null,
+						"pivot": {
+							"user_id": 4,
+							"service_id": 1,
+							"created_at": "2025-11-24T07:06:34.000000Z",
+							"updated_at": "2025-11-24T07:06:34.000000Z"
+						}
+					},
+					{
+						"id": 2,
+						"name": "soch olish",
+						"price": "200.00",
+						"service_duration": "01:30:00",
+						"created_at": "2025-11-24T07:02:04.000000Z",
+						"updated_at": "2025-11-24T07:02:04.000000Z",
+						"image": null,
+						"pivot": {
+							"user_id": 4,
+							"service_id": 2,
+							"created_at": "2025-11-24T07:06:40.000000Z",
+							"updated_at": "2025-11-24T07:06:40.000000Z"
+						}
+					}
+				]
+			},
+			{ "id": 6, "name": "qul", "phone": "998999999999", "services": [] },
+			{
+				"id": 11,
+				"name": "Vali aliyev",
+				"phone": "998981888911",
+				"services": []
+			},
+			{
+				"id": 12,
+				"name": "Vali aliyev",
+				"phone": "998981888912",
+				"services": []
+			},
+			{
+				"id": 13,
+				"name": "Vali aliyev",
+				"phone": "998981888913",
+				"services": []
+			},
+			{
+				"id": 14,
+				"name": "Vali aliyev",
+				"phone": "998981888914",
+				"services": []
+			},
+			{
+				"id": 5,
+				"name": "Vali aliyev",
+				"phone": "998981888918",
+				"services": [
+					{
+						"id": 1,
+						"name": "soch olish",
+						"price": "200.00",
+						"service_duration": "01:30:00",
+						"created_at": "2025-11-24T07:01:13.000000Z",
+						"updated_at": "2025-11-24T07:01:13.000000Z",
+						"image": null,
+						"pivot": {
+							"user_id": 5,
+							"service_id": 1,
+							"created_at": "2025-11-27T05:38:18.000000Z",
+							"updated_at": "2025-11-27T05:38:18.000000Z"
+						}
+					}
+				]
+			},
+			{ "id": 38, "name": "Shoxrux", "phone": "998981888902", "services": [] }
+		],
+		"admin": null
+	}
 }

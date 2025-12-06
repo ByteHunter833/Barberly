@@ -2,7 +2,6 @@ import 'package:barberly/core/widgets/banner_home.dart';
 import 'package:barberly/core/widgets/barber_card.dart';
 import 'package:barberly/core/widgets/filter_bottom_sheet.dart';
 import 'package:barberly/features/barbers/providers/barbers_provider.dart';
-import 'package:barberly/features/barbers/providers/current_location_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -22,6 +21,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   String _searchQuery = '';
   bool serviceEnabledCtx = false;
   bool permissionGranted = false;
+  bool _isInitializing = true;
 
   @override
   void initState() {
@@ -37,14 +37,16 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   /// Основной flow для локации
   Future<void> initLocationFlow() async {
+    setState(() => _isInitializing = true);
+
     await requestLocationPermission();
     await checkLocationService(context);
 
     if (serviceEnabledCtx && permissionGranted) {
-      Future.microtask(
-        () => ref.read(barbersControllerProvider.notifier).fetchNearestBarber(),
-      );
+      await ref.read(barbersControllerProvider.notifier).fetchNearestBarber();
     }
+
+    setState(() => _isInitializing = false);
   }
 
   /// Запрашивает permission
@@ -57,7 +59,9 @@ class _HomePageState extends ConsumerState<HomePage> {
 
     if (permission == LocationPermission.deniedForever) {
       permissionGranted = false;
-      await Geolocator.openAppSettings();
+      if (mounted) {
+        _showPermissionDialog();
+      }
       return;
     }
 
@@ -67,6 +71,46 @@ class _HomePageState extends ConsumerState<HomePage> {
     }
   }
 
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Row(
+          children: [
+            Icon(LucideIcons.mapPin, color: Color(0xff363062)),
+            SizedBox(width: 12),
+            Text('Location Permission'),
+          ],
+        ),
+        content: const Text(
+          'Location access is required to find nearby barbers. Please enable it in app settings.',
+          style: TextStyle(fontSize: 15),
+        ),
+        actions: [
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xff363062),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () async {
+              Navigator.pop(context);
+              await Geolocator.openAppSettings();
+            },
+            child: const Text('Open Settings'),
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Проверка GPS
   Future<void> checkLocationService(BuildContext context) async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
@@ -74,40 +118,48 @@ class _HomePageState extends ConsumerState<HomePage> {
       serviceEnabledCtx = serviceEnabled;
     });
 
-    if (!serviceEnabled) {
+    if (!serviceEnabled && mounted) {
       showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (context) => AlertDialog(
-          title: const Text('Location выключен'),
-          content: const Text('Пожалуйста, включите GPS.'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: const Row(
+            children: [
+              Icon(LucideIcons.navigation, color: Color(0xff363062)),
+              SizedBox(width: 12),
+              Text('GPS Required'),
+            ],
+          ),
+          content: const Text(
+            'Please enable GPS to find barbers near you.',
+            style: TextStyle(fontSize: 15),
+          ),
           actions: [
             TextButton(
-              child: const Text('Отмена'),
+              child: const Text('Cancel'),
               onPressed: () => Navigator.pop(context),
             ),
-            TextButton(
-              child: const Text('Включить GPS'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff363062),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
               onPressed: () async {
                 Navigator.pop(context);
                 await Geolocator.openLocationSettings();
                 await checkLocationService(context);
               },
+              child: const Text('Enable GPS'),
             ),
           ],
         ),
       );
-    }
-  }
-
-  Future<void> printLocationFromProvider() async {
-    try {
-      Position position = await CurrentLocationProvider.determinePosition();
-      print('🌍 Current location:');
-      print('Latitude: ${position.latitude}');
-      print('Longitude: ${position.longitude}');
-      print('Timestamp: ${position.timestamp}');
-    } catch (e) {
-      print('Ошибка при получении локации: $e');
     }
   }
 
@@ -122,7 +174,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     final barbersState = ref.watch(barbersControllerProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xffFAFAFA),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -130,31 +182,67 @@ class _HomePageState extends ConsumerState<HomePage> {
               await ref
                   .read(barbersControllerProvider.notifier)
                   .fetchNearestBarber();
+            } else {
+              await initLocationFlow();
             }
           },
+          color: const Color(0xff363062),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+            padding: const EdgeInsets.only(top: 18),
             physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _header(),
-                const SizedBox(height: 24),
-                const BannerHome(),
-                const SizedBox(height: 24),
-                _searchBar(context),
-                const SizedBox(height: 24),
-                const Text(
-                  'Most recommended',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _header(),
                 ),
-                const SizedBox(height: 10),
-                if (!serviceEnabledCtx || !permissionGranted)
-                  const Center(child: CircularProgressIndicator())
+                const SizedBox(height: 24),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: BannerHome(),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: _searchBar(context),
+                ),
+                const SizedBox(height: 28),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Nearest Babershop',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Color(0xff1C1C1C),
+                        ),
+                      ),
+                      if (!_isInitializing &&
+                          serviceEnabledCtx &&
+                          permissionGranted &&
+                          barbersState.nearestTenants.isNotEmpty)
+                        Text(
+                          '${barbersState.nearestTenants.length} found',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (_isInitializing)
+                  _buildLoadingState()
+                else if (!serviceEnabledCtx || !permissionGranted)
+                  _buildPermissionRequired()
                 else
                   barbersState.status.when(
                     data: (_) {
-                      // Безопасно приводим к List<NearestBarber> — если нет, то пустой список
                       final rawList = barbersState.nearestTenants;
 
                       final filteredRaw = _searchQuery.isEmpty
@@ -165,128 +253,275 @@ class _HomePageState extends ConsumerState<HomePage> {
                             }).toList();
 
                       if (filteredRaw.isEmpty) {
-                        return Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  _searchQuery.isEmpty
-                                      ? LucideIcons.users
-                                      : LucideIcons.searchX,
-                                  size: 64,
-                                  color: Colors.grey.shade400,
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  _searchQuery.isEmpty
-                                      ? 'No barbers available'
-                                      : 'No barbers found',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade600,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                if (_searchQuery.isNotEmpty) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Try searching with different keywords',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                  ),
-                                ],
-                              ],
-                            ),
-                          ),
-                        );
+                        return _buildEmptyState();
                       }
 
-                      return _mostRecommendSection(context, filteredRaw);
+                      return Column(
+                        children: [
+                          _mostRecommendSection(context, filteredRaw),
+                          const SizedBox(height: 24),
+                          _buildSeeAllButton(),
+                          const SizedBox(height: 24),
+                        ],
+                      );
                     },
-                    loading: () => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    error: (e, st) => Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              LucideIcons.alertCircle,
-                              size: 64,
-                              color: Colors.red.shade300,
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Failed to load barbers',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.black87,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              e.toString(),
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey.shade600,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton.icon(
-                              onPressed: () {
-                                if (serviceEnabledCtx && permissionGranted) {
-                                  ref
-                                      .read(barbersControllerProvider.notifier)
-                                      .fetchNearestBarber();
-                                }
-                              },
-                              icon: const Icon(LucideIcons.refreshCw),
-                              label: const Text('Retry'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xff363062),
-                                foregroundColor: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    loading: () => _buildLoadingState(),
+                    error: (e, st) => _buildErrorState(e),
                   ),
-                const SizedBox(height: 16),
-                Center(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xff363062),
-                      side: const BorderSide(color: Color(0xff363062)),
-                    ),
-                    onPressed: () => {},
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          'See All',
-                          style: TextStyle(
-                            color: Color(0xff363062),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Icon(LucideIcons.arrowUpRightSquare),
-                      ],
-                    ),
-                  ),
-                ),
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLoadingState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: Column(
+          children: [
+            const SizedBox(
+              width: 40,
+              height: 40,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xff363062)),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Finding barbers near you...',
+              style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPermissionRequired() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xff363062).withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                LucideIcons.mapPin,
+                size: 48,
+                color: Color(0xff363062),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Location Access Required',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xff1C1C1C),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'We need your location to show nearby barbers and provide the best service.',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: initLocationFlow,
+              icon: const Icon(LucideIcons.navigation),
+              label: const Text('Enable Location'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff363062),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade100,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _searchQuery.isEmpty ? LucideIcons.users : LucideIcons.searchX,
+                size: 48,
+                color: Colors.grey.shade400,
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'No Barbers Available'
+                  : 'No Results Found',
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xff1C1C1C),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              _searchQuery.isEmpty
+                  ? 'There are no barbers in your area yet. Check back later!'
+                  : 'Try different keywords or check your spelling',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (_searchQuery.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              OutlinedButton.icon(
+                onPressed: () => _searchController.clear(),
+                icon: const Icon(LucideIcons.x, size: 18),
+                label: const Text('Clear Search'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xff363062),
+                  side: const BorderSide(color: Color(0xff363062)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(Object error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.red.shade50,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                LucideIcons.alertCircle,
+                size: 48,
+                color: Colors.red.shade400,
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              'Something Went Wrong',
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(0xff1C1C1C),
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Unable to load barbers. Please check your connection and try again.',
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey.shade600,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: () {
+                if (serviceEnabledCtx && permissionGranted) {
+                  ref
+                      .read(barbersControllerProvider.notifier)
+                      .fetchNearestBarber();
+                }
+              },
+              icon: const Icon(LucideIcons.refreshCw, size: 18),
+              label: const Text('Try Again'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xff363062),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeeAllButton() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xff363062),
+            side: const BorderSide(color: Color(0xff363062), width: 1.5),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () => {},
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'View All Barbers',
+                style: TextStyle(
+                  color: Color(0xff363062),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                ),
+              ),
+              SizedBox(width: 8),
+              Icon(LucideIcons.arrowRight, size: 20),
+            ],
           ),
         ),
       ),
@@ -297,41 +532,47 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(
-              children: [
-                Icon(LucideIcons.mapPin, size: 16, color: Color(0xff363062)),
-                SizedBox(width: 4),
-                Text(
-                  'Yogyakarta',
-                  style: TextStyle(fontSize: 14, color: Color(0xff363062)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              Text(
+                'Hello, ${widget.user.isNotEmpty ? widget.user : 'Guest'}!',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xff1C1C1C),
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.user.isNotEmpty ? widget.user : 'Guest',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                color: Color(0xff1C1C1C),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: const Color(0xff363062),
-          child: Text(
-            widget.user.isNotEmpty
-                ? widget.user.substring(0, 1).toUpperCase()
-                : 'G',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+        const SizedBox(width: 16),
+        Container(
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xff363062).withOpacity(0.2),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: CircleAvatar(
+            radius: 26,
+            backgroundColor: const Color(0xff363062),
+            child: Text(
+              widget.user.isNotEmpty
+                  ? widget.user.substring(0, 1).toUpperCase()
+                  : 'G',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
             ),
           ),
         ),
@@ -343,53 +584,80 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Row(
       children: [
         Expanded(
-          child: TextField(
-            controller: _searchController,
-            decoration: InputDecoration(
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xffEBF0F5)),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xff363062),
-                  width: 2,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 2),
                 ),
+              ],
+            ),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(color: Colors.white),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: const BorderSide(
+                    color: Color(0xff363062),
+                    width: 2,
+                  ),
+                ),
+                prefixIcon: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: SvgPicture.asset(
+                    'assets/icons/search.svg',
+                    width: 20,
+                    height: 20,
+                  ),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () => _searchController.clear(),
+                      )
+                    : null,
+                hintText: 'Search barbers or services...',
+                hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 15),
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              prefixIcon: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: SvgPicture.asset('assets/icons/search.svg'),
-              ),
-              suffixIcon: _searchQuery.isNotEmpty
-                  ? IconButton(
-                      icon: const Icon(Icons.clear, size: 20),
-                      onPressed: () {
-                        _searchController.clear();
-                      },
-                    )
-                  : null,
-              hintText: "Search barber's, haircut service",
-              hintStyle: const TextStyle(color: Color(0xff8683A1)),
-              filled: true,
-              fillColor: const Color(0xffEBF0F5),
             ),
           ),
         ),
-        const SizedBox(width: 8),
-        IconButton(
-          onPressed: () => FilterBottomSheet.show(context),
-          style: IconButton.styleFrom(
-            minimumSize: const Size(53, 53),
-            backgroundColor: const Color(0xff363062),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+        const SizedBox(width: 12),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xff363062).withOpacity(0.3),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-          icon: SvgPicture.asset(
-            'assets/icons/filter.svg',
-            width: 24,
-            height: 24,
+          child: IconButton(
+            onPressed: () => FilterBottomSheet.show(context),
+            style: IconButton.styleFrom(
+              minimumSize: const Size(56, 56),
+              backgroundColor: const Color(0xff363062),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+            icon: SvgPicture.asset(
+              'assets/icons/filter.svg',
+              width: 24,
+              height: 24,
+            ),
           ),
         ),
       ],
@@ -397,12 +665,19 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _mostRecommendSection(BuildContext context, List barbers) {
-    // barbers — список Map<String, dynamic>, готовый к передаче в BarberCard
-    return Column(
-      children: List.generate(barbers.length, (index) {
-        final barber = barbers[index];
-        return BarberCard(barber: barber);
-      }),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: Column(
+        children: List.generate(barbers.length, (index) {
+          final barber = barbers[index];
+          return Padding(
+            padding: EdgeInsets.only(
+              bottom: index < barbers.length - 1 ? 16 : 0,
+            ),
+            child: BarberCard(barber: barber),
+          );
+        }),
+      ),
     );
   }
 }

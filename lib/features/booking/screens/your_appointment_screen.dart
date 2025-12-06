@@ -381,14 +381,12 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
   Future<void> _handlePayNow() async {
     if (widget.bookingData == null) return;
     final barberId = widget.bookingData?['barberId']?.toString();
-    final tenantId = widget.bookingData?['tenantId'];
+    final tenantId = int.parse(widget.bookingData?['barberId']);
+
     final serviceIds = widget.bookingData?['serviceIds'] as List<dynamic>?;
     final dateTime = widget.bookingData?['dateTime']?.toString();
 
-    if (barberId == null ||
-        tenantId == null ||
-        serviceIds == null ||
-        dateTime == null) {
+    if (barberId == null || serviceIds == null || dateTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Missing booking information')),
       );
@@ -442,7 +440,7 @@ class _YourAppointmentScreenState extends State<YourAppointmentScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
       }
     }
   }

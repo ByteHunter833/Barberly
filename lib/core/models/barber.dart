@@ -6,7 +6,7 @@ class Barber {
   final String name;
   final String imageUrl;
   final double rating;
-  final LatLng? location;
+  final String? location;
   final String? distance;
   final String? bio;
   final String? phone;
@@ -35,29 +35,27 @@ class Barber {
       phone: json['phone']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'No Name',
       imageUrl:
+          json['image']?.toString() ??
           json['imageUrl']?.toString() ??
-          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=300&fit=crop',
+          'https://placehold.co/200x200', // fallback
 
-      // rating защищён от int, double, string
       rating: _parseRating(json['rating']),
 
-      location: json['location'] ,
-      distance: json['distance']?.toString() ?? '2 km',
-      bio:
-          json['bio']?.toString() ??
-          'Experienced barber specializing in modern styles.',
+      location: 'Joga Expo Centre  (2 km)',
+      distance: json['distance']?.toString() ?? '',
+      bio: json['bio']?.toString() ?? 'Experienced Barber',
       services: json['services'] ?? [],
-      tenantId: json['tenant_id'], // динамик — можно оставить как есть
+      tenantId: json['tenant_id'],
     );
   }
 
   static double _parseRating(dynamic rating) {
-    if (rating == null) return 5.4;
+    if (rating == null) return 5.0;
     if (rating is num) return rating.toDouble();
-    if (rating is String) return double.tryParse(rating) ?? 5.4;
-    return 5.4;
+    if (rating is String) return double.tryParse(rating) ?? 5.0;
+    return 5.0;
   }
 }
 
@@ -67,7 +65,7 @@ class Tenant {
   final String name;
   final String imageUrl;
   final double rating;
-  final LatLng? location;
+  final String? location;
   final String? distance;
   final String? bio;
   final String? phone;
@@ -98,21 +96,20 @@ class Tenant {
       phone: json['phone']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
       id: json['id']?.toString() ?? '',
-      name: json['name']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'No Name',
       imageUrl:
+          json['image']?.toString() ??
           json['imageUrl']?.toString() ??
-          'https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=400&h=300&fit=crop',
+          'https://placehold.co/200x200',
 
-      // rating защищён от int, double, string
       rating: _parseRating(json['rating']),
+      location: 'Joga Expo Centre  (2 km)',
+      distance: json['distance']?.toString() ?? '',
 
-      location: json['location'] ,
-      distance: json['distance']?.toString() ?? '2 km',
-      bio:
-          json['bio']?.toString() ??
-          'Experienced barber specializing in modern styles.',
+      bio: json['bio']?.toString() ?? 'Experiendced Barber',
       services: json['services'] ?? [],
       tenantId: json['tenant_id'],
+
       barbers: (json['barbers'] as List<dynamic>? ?? [])
           .map((e) => Barber.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -120,9 +117,34 @@ class Tenant {
   }
 
   static double _parseRating(dynamic rating) {
-    if (rating == null) return 5.4;
+    if (rating == null) return 5.0;
     if (rating is num) return rating.toDouble();
-    if (rating is String) return double.tryParse(rating) ?? 5.4;
-    return 5.4;
+    if (rating is String) return double.tryParse(rating) ?? 5.0;
+    return 5.0;
   }
+}
+
+// ignore: unused_element
+LatLng? _parseLatLng(Map<String, dynamic> json) {
+  try {
+    if (json['location'] != null) {
+      final txt = json['location'].toString();
+      final match = RegExp(r'LatLng\((.*?), (.*?)\)').firstMatch(txt);
+      if (match != null) {
+        return LatLng(
+          double.parse(match.group(1)!),
+          double.parse(match.group(2)!),
+        );
+      }
+    }
+
+    if (json['latitude'] != null && json['longitude'] != null) {
+      return LatLng(
+        double.tryParse(json['latitude'].toString()) ?? 0.0,
+        double.tryParse(json['longitude'].toString()) ?? 0.0,
+      );
+    }
+  } catch (_) {}
+
+  return null;
 }
